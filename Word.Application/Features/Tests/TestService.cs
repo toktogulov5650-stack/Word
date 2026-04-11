@@ -55,7 +55,11 @@ public class TestService : ITestService
 
         await _testSessionRepository.AddAsync(testSession, cancellationToken);
 
-        var testQuestions = words
+        var shuffledWords = words
+            .OrderBy(_ => Random.Shared.Next())
+            .ToList();
+
+        var testQuestions = shuffledWords
             .Select((word, index) => new TestQuestion(
                 testSession.Id,
                 word.Id,
@@ -67,7 +71,7 @@ public class TestService : ITestService
         await _testQuestionRepository.AddRangeAsync(testQuestions, cancellationToken);
 
         var firstQuestion = testQuestions.OrderBy(a => a.QuestionOrder).First();
-        var currentWord = words.First(a => a.Id == firstQuestion.WordId);
+        var currentWord = shuffledWords.First(a => a.Id == firstQuestion.WordId);
 
         return new StartTestResponseDto
         {
