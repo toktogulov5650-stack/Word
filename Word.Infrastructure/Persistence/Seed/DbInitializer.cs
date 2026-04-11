@@ -24,7 +24,6 @@ public static class DbInitializer
             new("Негизги сөздөр", "Көп колдонулган негизги сөздөр."),
             new("Саякат", "Саякат жана жол жүрүү үчүн сөздөр."),
             new("Жемиштер", "Мөмө-жемиштердин аталыштары.")
-
         };
 
         var existingCategoryNames = await context.Categories
@@ -53,7 +52,7 @@ public static class DbInitializer
         var wordsByCategory = new Dictionary<string, IReadOnlyCollection<(string EnglishWord, string KyrgyzWord)>>(
             StringComparer.OrdinalIgnoreCase)
         {
-            ["Глаголы"] =
+            ["Этиштер"] =
             [
                 ("go", "баруу"),
                 ("come", "келүү"),
@@ -76,7 +75,7 @@ public static class DbInitializer
                 ("help", "жардам берүү"),
                 ("learn", "үйрөнүү")
             ],
-            ["Базовые слова"] =
+            ["Негизги сөздөр"] =
             [
                 ("hello", "салам"),
                 ("goodbye", "кош бол"),
@@ -99,7 +98,7 @@ public static class DbInitializer
                 ("city", "шаар"),
                 ("school", "мектеп")
             ],
-            ["Путешествие"] =
+            ["Саякат"] =
             [
                 ("airport", "аба майдан"),
                 ("passport", "паспорт"),
@@ -122,7 +121,7 @@ public static class DbInitializer
                 ("tourist", "саякатчы"),
                 ("guide", "жол көрсөтүүчү")
             ],
-            ["Фрукты"] =
+            ["Жемиштер"] =
             [
                 ("apple", "алма"),
                 ("banana", "банан"),
