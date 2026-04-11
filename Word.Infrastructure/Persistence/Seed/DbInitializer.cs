@@ -9,6 +9,7 @@ public static class DbInitializer
         AppDbContext context,
         CancellationToken cancellationToken = default)
     {
+        await context.Database.MigrateAsync(cancellationToken);
         await SeedCategoriesAsync(context, cancellationToken);
         await SeedWordsAsync(context, cancellationToken);
     }

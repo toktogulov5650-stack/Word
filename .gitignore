@@ -3,5 +3,11 @@
 **/obj/
 *.user
 *.suo
-*.db
-TestResults/
+*.cache
+*.pdb
+*.dbmdl
+*.jfm
+*.tmp
+*.log
+.idea/
+.vscode/

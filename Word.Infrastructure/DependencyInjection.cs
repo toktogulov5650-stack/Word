@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Word.Application.Abstractions.Persistence;
-using Word.Infrastructure.Configuration;
 using Word.Infrastructure.Persistence;
 using Word.Infrastructure.Repositories;
 
@@ -15,7 +14,10 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = ConnectionStringResolver.Resolve(configuration);
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new InvalidOperationException("Connection string 'DefaultConnection' was not found.");
 
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(connectionString));

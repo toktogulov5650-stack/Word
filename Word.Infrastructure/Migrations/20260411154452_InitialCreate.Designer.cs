@@ -11,7 +11,7 @@ using Word.Infrastructure.Persistence;
 namespace Word.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260409115258_InitialCreate")]
+    [Migration("20260411154452_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />

@@ -21,4 +21,9 @@
     <ProjectReference Include="..\Word.Infrastructure\Word.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\Dockerfile" Link="Dockerfile" />
+    <None Include="..\.dockerignore" Link=".dockerignore" />
+  </ItemGroup>
+
 </Project>
