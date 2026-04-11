@@ -1,0 +1,6 @@
+@word.API_HostAddress = http://localhost:5283
+
+GET {{word.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

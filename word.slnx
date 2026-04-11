@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="word.API/Word.API.csproj" />
+  <Project Path="Word.Application/Word.Application.csproj" />
+  <Project Path="Word.Domain/Word.Domain.csproj" />
+  <Project Path="Word.Infrastructure/Word.Infrastructure.csproj" />
+</Solution>
