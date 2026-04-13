@@ -4,39 +4,22 @@ using Word.Infrastructure.Persistence;
 using Word.Infrastructure.Persistence.Seed;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Configuration
-    .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true)
-    .AddEnvironmentVariables();
 
 var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")
     .Get<string[]>()?
     .Where(origin => !string.IsNullOrWhiteSpace(origin))
-    .ToList()
+    .ToArray()
     ?? [];
-
-var allowedOriginsCsv = builder.Configuration["Cors:AllowedOriginsCsv"]
-    ?? Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS");
-
-if (!string.IsNullOrWhiteSpace(allowedOriginsCsv))
-{
-    allowedOrigins.AddRange(
-        allowedOriginsCsv
-            .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
-}
-
-var distinctAllowedOrigins = allowedOrigins
-    .Distinct(StringComparer.OrdinalIgnoreCase)
-    .ToArray();
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
     {
-        if (distinctAllowedOrigins.Length > 0)
+        if (allowedOrigins.Length > 0)
         {
             policy
-                .WithOrigins(distinctAllowedOrigins)
+                .WithOrigins(allowedOrigins)
                 .AllowAnyHeader()
                 .AllowAnyMethod();
         }

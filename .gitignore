@@ -12,4 +12,4 @@
 .idea/
 .vscode/
 .env
-word.API/appsettings.Local.json
+word.API/appsettings.Production.json

@@ -19,18 +19,9 @@ Open these ports in Oracle Cloud:
 - `443` for HTTPS
 - `22` for SSH
 
-Connect over SSH and install Docker, Compose, Nginx, and Certbot:
+Connect over SSH to the VM.
 
-```bash
-sudo apt update
-sudo apt install -y docker.io docker-compose-plugin nginx certbot python3-certbot-nginx curl
-sudo systemctl enable --now docker
-sudo usermod -aG docker $USER
-```
-
-Reconnect to SSH after adding your user to the `docker` group.
-
-## 2. Copy the project and create environment variables
+## 2. Copy the project to the VM
 
 Clone the repository on the VM and go to the project folder:
 
@@ -39,32 +30,60 @@ git clone <YOUR_REPOSITORY_URL> word
 cd word
 ```
 
-Create the production env file from the template:
+Make the helper scripts executable:
+
+```bash
+chmod +x deploy/oracle/setup-vm.sh
+chmod +x deploy/oracle/deploy-api.sh
+```
+
+## 3. Install Docker, Nginx, and Certbot
+
+Run the VM setup helper:
+
+```bash
+./deploy/oracle/setup-vm.sh
+```
+
+Reconnect to SSH after adding your user to the `docker` group.
+
+## 4. Create runtime files
+
+Create the small runtime env file from the template:
 
 ```bash
 cp .env.example .env
 nano .env
 ```
 
-Fill in at least these values:
+These values are enough:
 
 - `APP_PORT=8080`
-- `CORS_ALLOWED_ORIGINS=https://your-frontend-domain.com`
-- `DEFAULT_CONNECTION=<your managed postgres connection string>`
+- `ASPNETCORE_ENVIRONMENT=Production`
+- `SWAGGER_ENABLED=false`
 
-For local development on your own machine, you can also copy `word.API/appsettings.Local.example.json` to `word.API/appsettings.Local.json`.
-
-## 3. Start the API container
+Then create the production appsettings file:
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build
-docker compose -f docker-compose.prod.yml ps
+cp word.API/appsettings.Production.example.json word.API/appsettings.Production.json
+nano word.API/appsettings.Production.json
+```
+
+Fill in:
+
+- real `ConnectionStrings:DefaultConnection`
+- real frontend domain in `Cors:AllowedOrigins`
+
+## 5. Start the API container
+
+```bash
+./deploy/oracle/deploy-api.sh
 curl http://127.0.0.1:8080/health
 ```
 
 If the health endpoint returns `Healthy`, the API is up.
 
-## 4. Configure Nginx
+## 6. Configure Nginx
 
 Copy the sample config:
 
@@ -81,7 +100,7 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-## 5. Enable HTTPS
+## 7. Enable HTTPS
 
 Point your domain DNS to the VM public IP, then run:
 
@@ -91,15 +110,16 @@ sudo certbot --nginx -d api.your-domain.com
 
 Certbot will update the Nginx config and install the certificate.
 
-## 6. Updating the app
+## 8. Updating the app
 
 ```bash
 git pull
-docker compose -f docker-compose.prod.yml up -d --build
+./deploy/oracle/deploy-api.sh
 ```
 
 ## Notes
 
-- The repository no longer stores the real production database password in `appsettings.json`. Use `.env` on the VM instead.
+- Keep real production secrets in `word.API/appsettings.Production.json` on the VM, not in git.
 - Because the current application seeds the database on startup, make sure the configured database user has permission to create and update schema.
 - On an Always Free VM, external managed Postgres is usually a better trade-off than running Postgres on the same small instance.
+- `.env` and `word.API/appsettings.Production.json` are already ignored by git in this repository.
