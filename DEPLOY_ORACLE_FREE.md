@@ -61,6 +61,7 @@ These values are enough:
 - `APP_PORT=8080`
 - `ASPNETCORE_ENVIRONMENT=Production`
 - `SWAGGER_ENABLED=false`
+- keep database and CORS settings in `word.API/appsettings.Production.json`, not in `.env`
 
 Then create the production appsettings file:
 
@@ -78,7 +79,7 @@ Fill in:
 
 ```bash
 ./deploy/oracle/deploy-api.sh
-curl http://127.0.0.1:8080/health
+curl http://127.0.0.1:<APP_PORT>/health
 ```
 
 If the health endpoint returns `Healthy`, the API is up.
@@ -120,6 +121,7 @@ git pull
 ## Notes
 
 - Keep real production secrets in `word.API/appsettings.Production.json` on the VM, not in git.
+- `.env.example` only contains variables that are actually passed into the production container.
 - Because the current application seeds the database on startup, make sure the configured database user has permission to create and update schema.
 - On an Always Free VM, external managed Postgres is usually a better trade-off than running Postgres on the same small instance.
 - `.env` and `word.API/appsettings.Production.json` are already ignored by git in this repository.

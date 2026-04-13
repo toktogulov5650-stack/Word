@@ -34,7 +34,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHealthChecks();
 builder.Services.AddSwaggerGen();
 
-
 var port = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrWhiteSpace(port))
 {
@@ -54,8 +53,6 @@ if (builder.Configuration.GetValue<bool>("Swagger:Enabled"))
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-
 
 app.UseCors("Frontend");
 
