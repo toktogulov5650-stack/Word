@@ -43,6 +43,13 @@ if (!string.IsNullOrWhiteSpace(port))
 var app = builder.Build();
 
 
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await DbInitializer.InitializeAsync(context);
+}
+
+
 if (builder.Configuration.GetValue<bool>("Swagger:Enabled"))
 {
     app.UseSwagger();

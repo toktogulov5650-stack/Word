@@ -7,7 +7,9 @@ services:
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
-      PORT: ${APP_PORT:-8080}
-      Swagger__Enabled: ${SWAGGER_ENABLED:-false}
+      PORT: ${PORT:-8080}
+      Swagger__Enabled: ${Swagger__Enabled:-false}
+      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection}
+      Cors__AllowedOrigins__0: ${Cors__AllowedOrigins__0}
     ports:
-      - "127.0.0.1:${APP_PORT:-8080}:${APP_PORT:-8080}"
+      - "127.0.0.1:${PORT:-8080}:${PORT:-8080}"
