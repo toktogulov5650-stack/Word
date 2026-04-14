@@ -7,7 +7,7 @@
       "launchBrowser": false,
       "applicationUrl": "http://localhost:5299",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_ENVIRONMENT": "Production",
         "Swagger__Enabled": "true",
         "ConnectionStrings__DefaultConnection": "Host=ep-round-tooth-amdo7pk6-pooler.c-5.us-east-1.aws.neon.tech;Port=5432;Database=neondb;Username=neondb_owner;Password=npg_N9LfJszCZx4P;SSL Mode=Require;Channel Binding=Require",
         "Cors__AllowedOrigins__0": "http://localhost:3000"
@@ -19,7 +19,7 @@
       "launchBrowser": false,
       "applicationUrl": "https://localhost:7299;http://localhost:5299",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_ENVIRONMENT": "Production",
         "Swagger__Enabled": "true",
         "ConnectionStrings__DefaultConnection": "Host=ep-round-tooth-amdo7pk6-pooler.c-5.us-east-1.aws.neon.tech;Port=5432;Database=neondb;Username=neondb_owner;Password=npg_N9LfJszCZx4P;SSL Mode=Require;Channel Binding=Require",
         "Cors__AllowedOrigins__0": "http://localhost:3000"
