@@ -13,10 +13,14 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        var connectionString =
+            configuration.GetConnectionString("DefaultConnection")
+            ?? configuration["ConnectionStrings__DefaultConnection"]
+            ?? configuration["DEFAULT_CONNECTION"];
 
         if (string.IsNullOrWhiteSpace(connectionString))
-            throw new InvalidOperationException("Connection string 'DefaultConnection' was not found.");
+            throw new InvalidOperationException(
+                "Connection string was not found. Checked: ConnectionStrings:DefaultConnection, ConnectionStrings__DefaultConnection, DEFAULT_CONNECTION.");
 
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(connectionString));
