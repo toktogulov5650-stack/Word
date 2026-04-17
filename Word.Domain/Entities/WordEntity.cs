@@ -23,7 +23,7 @@ public class WordEntity
         {
             throw new Exception("Word KyrgyzWord is too long");
         }
-
+        
         if (categoryId <= 0)
         {
             throw new Exception("CategoryId must be greater than zero");
