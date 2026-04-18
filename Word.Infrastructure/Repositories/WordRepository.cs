@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Word.Domain.Entities;
 using Word.Application.Abstractions.Persistence;
 using Word.Infrastructure.Persistence;
@@ -22,19 +22,4 @@ public class WordRepository : IWordRepository
             .Where(a => a.CategoryId == categoryId && a.IsActive)
             .ToListAsync(cancellationToken);
     }
-
-
-    public async Task<IReadOnlyCollection<WordEntity>> GetByIdsAsync(
-        IReadOnlyCollection<int> ids,
-        CancellationToken cancellationToken = default)
-    {
-        if (ids.Count == 0)
-            return [];
-
-
-        return await _appDbContext.WordEntities
-            .Where(a => ids.Contains(a.Id) && a.IsActive)
-            .ToListAsync(cancellationToken);
-    }
 }
-
