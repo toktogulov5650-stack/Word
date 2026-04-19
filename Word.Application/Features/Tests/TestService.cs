@@ -65,13 +65,14 @@ public class TestService : ITestService
                 word.Id,
                 index + 1,
                 false,
+                false,
                 false))
             .ToList();
 
         await _testQuestionRepository.AddRangeAsync(testQuestions, cancellationToken);
 
-        var firstQuestion = testQuestions.OrderBy(a => a.QuestionOrder).First();
-        var currentWord = shuffledWords.First(a => a.Id == firstQuestion.WordId);
+        var firstQuestion = testQuestions.OrderBy(x => x.QuestionOrder).First();
+        var currentWord = shuffledWords.First(x => x.Id == firstQuestion.WordId);
 
         return new StartTestResponseDto
         {
@@ -106,12 +107,24 @@ public class TestService : ITestService
         if (currentQuestion.IsAnswered)
             throw new Exception("На этот вопрос уже ответили");
 
-        var isCorrect = string.Equals(
-            currentQuestion.Word.KyrgyzWord,
-            request.SelectedAnswer,
-            StringComparison.OrdinalIgnoreCase);
+        bool isCorrect;
 
-        currentQuestion.MarkAnswered(isCorrect);
+        if (request.IsMarkedUnknown)
+        {
+            currentQuestion.MarkUnknown();
+            currentQuestion.MarkAnswered(false);
+            isCorrect = false;
+        }
+        else
+        {
+            isCorrect = string.Equals(
+                currentQuestion.Word.KyrgyzWord,
+                request.SelectedAnswer,
+                StringComparison.OrdinalIgnoreCase);
+
+            currentQuestion.MarkAnswered(isCorrect);
+        }
+
         await _testQuestionRepository.UpdateAsync(currentQuestion, cancellationToken);
 
         if (isCorrect)
@@ -136,7 +149,7 @@ public class TestService : ITestService
         await _testSessionRepository.UpdateAsync(testSession, cancellationToken);
 
         var words = (await _wordRepository.GetByCategoryIdAsync(testSession.CategoryId, cancellationToken)).ToList();
-        var nextWord = words.First(a => a.Id == nextQuestion.WordId);
+        var nextWord = words.First(x => x.Id == nextQuestion.WordId);
 
         return new SubmitAnswerResponseDto
         {
@@ -192,9 +205,9 @@ public class TestService : ITestService
         IReadOnlyCollection<WordEntity> words)
     {
         var wrongAnswersPool = words
-            .Where(a => a.Id != currentWord.Id)
-            .Select(a => a.KyrgyzWord)
-            .Where(a => !string.Equals(a, currentWord.KyrgyzWord, StringComparison.OrdinalIgnoreCase))
+            .Where(x => x.Id != currentWord.Id)
+            .Select(x => x.KyrgyzWord)
+            .Where(x => !string.Equals(x, currentWord.KyrgyzWord, StringComparison.OrdinalIgnoreCase))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(_ => Guid.NewGuid())
             .ToList();

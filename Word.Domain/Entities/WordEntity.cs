@@ -12,6 +12,8 @@ public class WordEntity
     public Category Category { get; private set; } = null!;
     public bool IsActive { get; private set; }
 
+    public WordExplanation? Explanation { get; private set; }
+
     public WordEntity(string englishWord, string kyrgyzWord, int categoryId)
     {
         if (englishWord.Length > DomainConstraints.EnglishWordMaxLength)

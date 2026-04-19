@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddScoped<ITestSessionRepository, TestSessionRepository>();
         services.AddScoped<ICategoryRecordRepository, CategoryRecordRepository>();
         services.AddScoped<ITestQuestionRepository, TestQuestionRepository>();
+        services.AddScoped<IWordExplanationRepository, WordExplanationsRepository>();
 
         return services;
     }

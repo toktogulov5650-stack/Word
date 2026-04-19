@@ -6,13 +6,22 @@ public class TestQuestion
     {
     }
 
-    public TestQuestion(int testSessionId, int wordId, int questionOrder, bool isAnswered, bool isCorrect)
+    public TestQuestion(
+        int testSessionId,
+        int wordId,
+        int questionOrder,
+        bool isAnswered,
+        bool isCorrect,
+        bool isMarkedUnknown)
+
     {
         TestSessionId = testSessionId;
         WordId = wordId;
         QuestionOrder = questionOrder;
         IsAnswered = isAnswered;
         IsCorrect = isCorrect;
+        IsMarkedUnknown = isMarkedUnknown;
+
     }
 
     public int Id { get; private set; }
@@ -23,10 +32,16 @@ public class TestQuestion
     public int QuestionOrder { get; private set; }
     public bool IsAnswered { get; private set; }
     public bool IsCorrect { get; private set; }
+    public bool IsMarkedUnknown { get; private set; }
 
     public void MarkAnswered(bool isCorrect)
     {
         IsAnswered = true;
         IsCorrect = isCorrect;
+    }
+
+    public void MarkUnknown()
+    {
+        IsMarkedUnknown = true;
     }
 }

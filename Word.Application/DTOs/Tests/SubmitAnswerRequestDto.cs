@@ -14,4 +14,6 @@ public class SubmitAnswerRequestDto
 
     [MaxLength(100)]
     public string SelectedAnswer { get; set; } = string.Empty;
+
+    public bool IsMarkedUnknown { get; set; }
 }

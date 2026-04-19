@@ -50,7 +50,8 @@ public class TestsController : ControllerBase
         {
             TestSessionId = request.TestSessionId,
             WordId = request.WordId,
-            SelectedAnswer = request.SelectedAnswer
+            SelectedAnswer = request.SelectedAnswer,
+            IsMarkedUnknown = request.IsMarkedUnknown
         };
 
 

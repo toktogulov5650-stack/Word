@@ -38,6 +38,18 @@ public class TestQuestionRepository : ITestQuestionRepository
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+
+    public async Task<IReadOnlyCollection<TestQuestion>> GetMarkedUnknownByTestSessionIdAsync(
+        int testSessionId,
+        CancellationToken cancellationToken = default)
+    {
+        return await _appDbContext.TestQuestions
+            .Include(a => a.Word)
+            .Where(a => a.TestSessionId == testSessionId && a.IsMarkedUnknown)
+            .OrderBy(a => a.QuestionOrder)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task UpdateAsync(TestQuestion testQuestion, CancellationToken cancellationToken = default)
     {
         _appDbContext.TestQuestions.Update(testQuestion);

@@ -36,5 +36,8 @@ public class TestQuestionConfiguration : IEntityTypeConfiguration<TestQuestion>
 
         builder.Property(a => a.IsCorrect)
             .IsRequired();
+
+        builder.Property(a => a.IsMarkedUnknown)
+            .IsRequired();
     }
 }

@@ -11,7 +11,8 @@ public class SubmitAnswerRequest
     [Range(1, int.MaxValue)]
     public int WordId { get; set; }
 
-    [Required]
     [MaxLength(100)]
     public string SelectedAnswer { get; set; } = string.Empty;
+
+    public bool IsMarkedUnknown { get; set; }
 }
