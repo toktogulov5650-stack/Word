@@ -1,7 +1,12 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Word.Application;
 using Word.Infrastructure;
+using Word.Infrastructure.Configurations;
 using Word.Infrastructure.Persistence;
 using Word.Infrastructure.Persistence.Seed;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +39,27 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHealthChecks();
 builder.Services.AddSwaggerGen();
 
+var jwtSection = builder.Configuration.GetSection(JwtOptions.SectionName);
+var jwtOptions = jwtSection.Get<JwtOptions>() ?? new JwtOptions();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtOptions.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtOptions.Audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtOptions.Key)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+
+
 var port = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrWhiteSpace(port))
 {
@@ -52,6 +78,8 @@ if (builder.Configuration.GetValue<bool>("Swagger:Enabled"))
 
 app.UseCors("Frontend");
 
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAuthorization();
 app.MapHealthChecks("/health");
 app.MapControllers();

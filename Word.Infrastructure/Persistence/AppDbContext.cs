@@ -17,6 +17,7 @@ public class AppDbContext : DbContext
     public DbSet<WordEntity> WordEntities => Set<WordEntity>();
     public DbSet<TestQuestion> TestQuestions => Set<TestQuestion>();
     public DbSet<WordExplanation> WordExplanations => Set<WordExplanation>();
+    public DbSet<AppUser> Users => Set<AppUser>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

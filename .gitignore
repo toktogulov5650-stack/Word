@@ -13,3 +13,4 @@
 .vscode/
 .env
 word.API/appsettings.Production.json
+/word.API/.cloud.env
