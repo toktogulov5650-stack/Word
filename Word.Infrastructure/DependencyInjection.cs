@@ -40,6 +40,7 @@ public static class DependencyInjection
 
         services.AddScoped<IGoogleTokenVerifier, GoogleTokenVerifier>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+        services.AddScoped<IPasswordHasherService, PasswordHasherService>();
 
         return services;
     }

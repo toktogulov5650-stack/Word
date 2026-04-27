@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Word Flashcards</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <main class="page">
+        <section class="panel">
+            <p class="eyebrow">Flashcards</p>
+            <h1>English to Kyrgyz</h1>
+            <p class="subtitle">Tap the card to reveal all Kyrgyz translations, then move to the next random word.</p>
+
+            <button id="flashcard" class="flashcard" type="button" aria-live="polite">
+                <span class="label">English</span>
+                <span id="english-word" class="english-word">Loading...</span>
+
+                <span id="translation-block" class="translation-block hidden">
+                    <span class="label">Kyrgyz</span>
+                    <span id="kyrgyz-translations" class="translations"></span>
+                </span>
+            </button>
+
+            <div class="actions">
+                <button id="next-button" class="next-button" type="button">Next</button>
+            </div>
+
+            <p id="status-text" class="status-text">Loading flashcard...</p>
+        </section>
+    </main>
+
+    <script src="/app.js"></script>
+</body>
+</html>

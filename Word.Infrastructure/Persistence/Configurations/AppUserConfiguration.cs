@@ -1,7 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Word.Domain.Entities;
-
 
 namespace Word.Infrastructure.Persistence.Configurations;
 
@@ -11,27 +10,32 @@ public class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
     {
         builder.ToTable("Users");
 
-        builder.HasKey(a => a.Id);
+        builder.HasKey(x => x.Id);
 
-        builder.Property(a => a.GoogleId)
+        builder.Property(x => x.Name)
             .IsRequired()
             .HasMaxLength(200);
 
-        builder.Property(a => a.Email)
+        builder.Property(x => x.Email)
             .IsRequired()
             .HasMaxLength(200);
 
-        builder.Property(a => a.Name)
-            .IsRequired()
+        builder.Property(x => x.GoogleId)
             .HasMaxLength(200);
 
-        builder.Property(a => a.CreatedAtUtc)
+        builder.Property(x => x.PasswordHash)
+            .HasMaxLength(500);
+
+        builder.Property(x => x.CreatedAtUtc)
             .IsRequired();
 
-        builder.Property(a => a.LastLoginAtUtc)
+        builder.Property(x => x.LastLoginAtUtc)
             .IsRequired();
 
-        builder.HasIndex(a => a.GoogleId)
+        builder.HasIndex(x => x.Email)
+            .IsUnique();
+
+        builder.HasIndex(x => x.GoogleId)
             .IsUnique();
     }
 }

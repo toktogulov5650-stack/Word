@@ -18,6 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<TestQuestion> TestQuestions => Set<TestQuestion>();
     public DbSet<WordExplanation> WordExplanations => Set<WordExplanation>();
     public DbSet<AppUser> Users => Set<AppUser>();
+    public DbSet<WordTranslation> WordTranslations => Set<WordTranslation>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

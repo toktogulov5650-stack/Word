@@ -1,7 +1,6 @@
-﻿using Word.Application.Abstractions.Persistence;
+using Word.Application.Abstractions.Persistence;
 using Word.Application.Abstractions.Services;
 using Word.Application.DTOs.WordExplanations;
-
 
 namespace Word.Application.Features.WordExplanations;
 
@@ -17,7 +16,6 @@ public class WordExplanationService : IWordExplanationService
         _wordExplanationRepository = wordExplanationRepository;
         _testQuestionRepository = testQuestionRepository;
     }
-
 
     public async Task<WordExplanationDto?> GetByWordIdAsync(int wordId, CancellationToken cancellationToken = default)
     {
@@ -40,7 +38,6 @@ public class WordExplanationService : IWordExplanationService
             Hint = wordExplanation.Hint
         };
     }
-
 
     public async Task<IReadOnlyCollection<WordExplanationDto>> GetByWordIdsAsync(
         IReadOnlyCollection<int> wordIds,
@@ -65,7 +62,6 @@ public class WordExplanationService : IWordExplanationService
             .ToList();
     }
 
-
     public async Task<IReadOnlyCollection<WordExplanationDto>> GetByCategoryIdAsync(
        int categoryId,
        CancellationToken cancellationToken = default)
@@ -89,7 +85,6 @@ public class WordExplanationService : IWordExplanationService
             .ToList();
     }
 
-
     public async Task<IReadOnlyCollection<UnknownWordDto>> GetMarkedUnknownByTestSessionIdAsync(
         int testSessionId,
         CancellationToken cancellationToken = default)
@@ -102,9 +97,10 @@ public class WordExplanationService : IWordExplanationService
             {
                 WordId = testQuestion.WordId,
                 EnglishWord = testQuestion.Word.EnglishWord,
-                PrimaryTranslation = testQuestion.Word.KyrgyzWord
+                PrimaryTranslation = testQuestion.Word.WordTranslations
+                    .Select(x => x.KyrgyzWord)
+                    .FirstOrDefault() ?? string.Empty
             })
             .ToList();
     }
-
 }

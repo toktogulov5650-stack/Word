@@ -1,10 +1,9 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Word.API.Contracts;
 using Word.API.Contracts.Auth;
 using Word.Application.Abstractions.Services;
-
+using Word.Application.DTOs.Auth;
 
 namespace Word.API.Controllers;
 
@@ -19,6 +18,38 @@ public class AuthController : ControllerBase
         _authService = authService;
     }
 
+    [HttpPost("register")]
+    public async Task<ActionResult<AuthResponse>> RegisterAsync(
+        RegisterRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _authService.RegisterAsync(
+            new RegisterRequestDto
+            {
+                Name = request.Name,
+                Email = request.Email,
+                Password = request.Password
+            },
+            cancellationToken);
+
+        return Ok(MapAuthResponse(result));
+    }
+
+    [HttpPost("login")]
+    public async Task<ActionResult<AuthResponse>> LoginAsync(
+        LoginRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _authService.LoginAsync(
+            new LoginRequestDto
+            {
+                Email = request.Email,
+                Password = request.Password
+            },
+            cancellationToken);
+
+        return Ok(MapAuthResponse(result));
+    }
 
     [HttpPost("google")]
     public async Task<ActionResult<AuthResponse>> GoogleAsync(
@@ -30,19 +61,8 @@ public class AuthController : ControllerBase
 
         var result = await _authService.SignInWithGoogleAsync(request.IdToken, cancellationToken);
 
-        return Ok(new AuthResponse
-        {
-            AccessToken = result.AccessToken,
-            User = new CurrentUserResponse
-            {
-                Id = result.User.Id,
-                Email = result.User.Email,
-                Name = result.User.Name,
-            }
-        });
+        return Ok(MapAuthResponse(result));
     }
-
-
 
     [Authorize]
     [HttpGet("me")]
@@ -65,5 +85,19 @@ public class AuthController : ControllerBase
             Email = user.Email,
             Name = user.Name,
         });
+    }
+
+    private static AuthResponse MapAuthResponse(AuthResponseDto result)
+    {
+        return new AuthResponse
+        {
+            AccessToken = result.AccessToken,
+            User = new CurrentUserResponse
+            {
+                Id = result.User.Id,
+                Email = result.User.Email,
+                Name = result.User.Name
+            }
+        };
     }
 }

@@ -1,12 +1,12 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Word.API.Middleware;
 using Word.Application;
 using Word.Infrastructure;
 using Word.Infrastructure.Configurations;
 using Word.Infrastructure.Persistence;
 using Word.Infrastructure.Persistence.Seed;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,7 +59,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-
 var port = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrWhiteSpace(port))
 {
@@ -68,7 +67,12 @@ if (!string.IsNullOrWhiteSpace(port))
 
 var app = builder.Build();
 
-
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await DbInitializer.InitializeAsync(dbContext);
+    await AuthSchemaInitializer.InitializeAsync(dbContext);
+}
 
 if (builder.Configuration.GetValue<bool>("Swagger:Enabled"))
 {
@@ -76,10 +80,13 @@ if (builder.Configuration.GetValue<bool>("Swagger:Enabled"))
     app.UseSwaggerUI();
 }
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+app.UseMiddleware<ApiExceptionMiddleware>();
 app.UseCors("Frontend");
 
 app.UseAuthentication();
-app.UseAuthorization();
 app.UseAuthorization();
 app.MapHealthChecks("/health");
 app.MapControllers();

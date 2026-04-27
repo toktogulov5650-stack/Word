@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Word.Application.Abstractions.Services;
 using Word.Application.Features.Auth;
 using Word.Application.Features.Categories;
+using Word.Application.Features.Flashcards;
 using Word.Application.Features.Records;
 using Word.Application.Features.Tests;
 using Word.Application.Features.WordExplanations;
@@ -16,6 +17,7 @@ public static class DependencyInjection
         services.AddScoped<IRecordService, RecordService>();
         services.AddScoped<ITestService, TestService>();
         services.AddScoped<IWordExplanationService, WordExplanationService>();
+        services.AddScoped<IFlashcardService, FlashcardService>();
         services.AddScoped<IAuthService, AuthService>();
 
         return services;

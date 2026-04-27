@@ -17,16 +17,16 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
-	<PackageReference Include="Google.Apis.Auth" Version="1.69.0" />
+    <PackageReference Include="Google.Apis.Auth" Version="1.69.0" />
 	<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.*" />
 	<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.0" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
 
 
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Word.Application\Word.Application.csproj" />
-    <ProjectReference Include="..\Word.Domain\Word.Domain.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-﻿using Word.Application.Abstractions.Persistence;
+using Word.Application.Abstractions.Persistence;
 using Word.Application.Abstractions.Services;
 using Word.Application.DTOs.Tests;
 using Word.Domain.Entities;
@@ -35,15 +35,15 @@ public class TestService : ITestService
         var category = await _categoryRepository.GetByIdAsync(request.CategoryId, cancellationToken);
 
         if (category is null)
-            throw new Exception("Выбранная категория не существует");
+            throw new KeyNotFoundException("Р’С‹Р±СЂР°РЅРЅР°СЏ РєР°С‚РµРіРѕСЂРёСЏ РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚");
 
         var words = (await _wordRepository.GetByCategoryIdAsync(request.CategoryId, cancellationToken)).ToList();
 
         if (!words.Any())
-            throw new Exception("В этой категории нет слов");
+            throw new InvalidOperationException("Р’ СЌС‚РѕР№ РєР°С‚РµРіРѕСЂРёРё РЅРµС‚ СЃР»РѕРІ");
 
         if (words.Count < 4)
-            throw new Exception("Для теста нужно минимум 4 слова в категории");
+            throw new InvalidOperationException("Р”Р»СЏ С‚РµСЃС‚Р° РЅСѓР¶РЅРѕ РјРёРЅРёРјСѓРј 4 СЃР»РѕРІР° РІ РєР°С‚РµРіРѕСЂРёРё");
 
         var testSession = new TestSession
         {
@@ -93,19 +93,19 @@ public class TestService : ITestService
         var testSession = await _testSessionRepository.GetByIdAsync(request.TestSessionId, cancellationToken);
 
         if (testSession is null)
-            throw new Exception("Тестовая сессия не найдена");
+            throw new KeyNotFoundException("РўРµСЃС‚РѕРІР°СЏ СЃРµСЃСЃРёСЏ РЅРµ РЅР°Р№РґРµРЅР°");
 
         if (testSession.Status == TestSessionStatus.Completed)
-            throw new Exception("Тест уже завершен");
+            throw new InvalidOperationException("РўРµСЃС‚ СѓР¶Рµ Р·Р°РІРµСЂС€РµРЅ");
 
         var currentQuestion = await _testQuestionRepository
             .GetByTestSessionIdAndWordIdAsync(request.TestSessionId, request.WordId, cancellationToken);
 
         if (currentQuestion is null)
-            throw new Exception("Вопрос не найден");
+            throw new KeyNotFoundException("Р’РѕРїСЂРѕСЃ РЅРµ РЅР°Р№РґРµРЅ");
 
         if (currentQuestion.IsAnswered)
-            throw new Exception("На этот вопрос уже ответили");
+            throw new InvalidOperationException("РќР° СЌС‚РѕС‚ РІРѕРїСЂРѕСЃ СѓР¶Рµ РѕС‚РІРµС‚РёР»Рё");
 
         bool isCorrect;
 
@@ -117,10 +117,11 @@ public class TestService : ITestService
         }
         else
         {
-            isCorrect = string.Equals(
-                currentQuestion.Word.KyrgyzWord,
-                request.SelectedAnswer,
-                StringComparison.OrdinalIgnoreCase);
+            isCorrect = currentQuestion.Word.WordTranslations
+                .Any(x => string.Equals(
+                    x.KyrgyzWord,
+                    request.SelectedAnswer,
+                    StringComparison.OrdinalIgnoreCase));
 
             currentQuestion.MarkAnswered(isCorrect);
         }
@@ -172,7 +173,7 @@ public class TestService : ITestService
         var testSession = await _testSessionRepository.GetByIdAsync(testSessionId, cancellationToken);
 
         if (testSession is null)
-            throw new Exception("Тестовая сессия не найдена");
+            throw new KeyNotFoundException("РўРµСЃС‚РѕРІР°СЏ СЃРµСЃСЃРёСЏ РЅРµ РЅР°Р№РґРµРЅР°");
 
         if (testSession.Status != TestSessionStatus.Completed)
         {
@@ -204,20 +205,30 @@ public class TestService : ITestService
         WordEntity currentWord,
         IReadOnlyCollection<WordEntity> words)
     {
+        var currentTranslations = currentWord.WordTranslations
+            .Select(x => x.KyrgyzWord)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var correctAnswer = currentTranslations.FirstOrDefault();
+
+        if (string.IsNullOrWhiteSpace(correctAnswer))
+            throw new InvalidOperationException("Р”Р»СЏ СЃР»РѕРІР° РЅРµС‚ РїРµСЂРµРІРѕРґР°");
+
         var wrongAnswersPool = words
             .Where(x => x.Id != currentWord.Id)
-            .Select(x => x.KyrgyzWord)
-            .Where(x => !string.Equals(x, currentWord.KyrgyzWord, StringComparison.OrdinalIgnoreCase))
+            .SelectMany(x => x.WordTranslations.Select(t => t.KyrgyzWord))
+            .Where(x => currentTranslations.All(y => !string.Equals(y, x, StringComparison.OrdinalIgnoreCase)))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(_ => Guid.NewGuid())
             .ToList();
 
         if (wrongAnswersPool.Count < 3)
-            throw new Exception("Недостаточно уникальных вариантов ответа для вопроса");
+            throw new InvalidOperationException("РќРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ СѓРЅРёРєР°Р»СЊРЅС‹С… РІР°СЂРёР°РЅС‚РѕРІ РѕС‚РІРµС‚Р° РґР»СЏ РІРѕРїСЂРѕСЃР°");
 
         return wrongAnswersPool
             .Take(3)
-            .Append(currentWord.KyrgyzWord)
+            .Append(correctAnswer)
             .OrderBy(_ => Guid.NewGuid())
             .ToList();
     }

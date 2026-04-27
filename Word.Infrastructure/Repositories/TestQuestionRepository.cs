@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Word.Application.Abstractions.Persistence;
 using Word.Domain.Entities;
 using Word.Infrastructure.Persistence;
@@ -9,7 +9,7 @@ public class TestQuestionRepository : ITestQuestionRepository
 {
     private readonly AppDbContext _appDbContext;
 
-    public TestQuestionRepository(AppDbContext appDbContext) 
+    public TestQuestionRepository(AppDbContext appDbContext)
     {
         _appDbContext = appDbContext;
     }
@@ -24,6 +24,7 @@ public class TestQuestionRepository : ITestQuestionRepository
     {
         return await _appDbContext.TestQuestions
             .Include(a => a.Word)
+            .ThenInclude(a => a.WordTranslations)
             .FirstOrDefaultAsync(
                 a => a.TestSessionId == testSessionId && a.WordId == wordId,
                 cancellationToken);
@@ -33,11 +34,11 @@ public class TestQuestionRepository : ITestQuestionRepository
     {
         return await _appDbContext.TestQuestions
             .Include(a => a.Word)
+            .ThenInclude(a => a.WordTranslations)
             .Where(a => a.TestSessionId == testSessionId && !a.IsAnswered)
             .OrderBy(a => a.QuestionOrder)
             .FirstOrDefaultAsync(cancellationToken);
     }
-
 
     public async Task<IReadOnlyCollection<TestQuestion>> GetMarkedUnknownByTestSessionIdAsync(
         int testSessionId,
@@ -45,6 +46,7 @@ public class TestQuestionRepository : ITestQuestionRepository
     {
         return await _appDbContext.TestQuestions
             .Include(a => a.Word)
+            .ThenInclude(a => a.WordTranslations)
             .Where(a => a.TestSessionId == testSessionId && a.IsMarkedUnknown)
             .OrderBy(a => a.QuestionOrder)
             .ToListAsync(cancellationToken);

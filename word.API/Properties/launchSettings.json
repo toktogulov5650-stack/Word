@@ -10,7 +10,12 @@
         "ASPNETCORE_ENVIRONMENT": "Production",
         "Swagger__Enabled": "true",
         "ConnectionStrings__DefaultConnection": "Host=ep-round-tooth-amdo7pk6-pooler.c-5.us-east-1.aws.neon.tech;Port=5432;Database=neondb;Username=neondb_owner;Password=npg_N9LfJszCZx4P;SSL Mode=Require;Channel Binding=Require",
-        "Cors__AllowedOrigins__0": "http://localhost:3000"
+        "Cors__AllowedOrigins__0": "http://localhost:3000",
+        "Authentication__Google__ClientId": "204077634716-j5uqid266l0lj0eihmvtdpb13o71a61h.apps.googleusercontent.com",
+        "Authentication__Jwt__Issuer": "word-api",
+        "Authentication__Jwt__Audience": "word-api-client",
+        "Authentication__Jwt__Key": "6bDEflMZfjhpP3MpBUk/hKrTZxNlG7Wupu7//Ug+NUrz8iaHIGgQLtA0MGZjb2fCOSLInMXlhbGlnTxqwwGKeg==",
+        "Authentication__Jwt__ExpirationMinutes": "60"
       }
     },
     "https": {
@@ -22,7 +27,12 @@
         "ASPNETCORE_ENVIRONMENT": "Production",
         "Swagger__Enabled": "true",
         "ConnectionStrings__DefaultConnection": "Host=ep-round-tooth-amdo7pk6-pooler.c-5.us-east-1.aws.neon.tech;Port=5432;Database=neondb;Username=neondb_owner;Password=npg_N9LfJszCZx4P;SSL Mode=Require;Channel Binding=Require",
-        "Cors__AllowedOrigins__0": "http://localhost:3000"
+        "Cors__AllowedOrigins__0": "http://localhost:3000",
+        "Authentication__Google__ClientId": "204077634716-j5uqid266l0lj0eihmvtdpb13o71a61h.apps.googleusercontent.com",
+        "Authentication__Jwt__Issuer": "word-api",
+        "Authentication__Jwt__Audience": "word-api-client",
+        "Authentication__Jwt__Key": "6bDEflMZfjhpP3MpBUk/hKrTZxNlG7Wupu7//Ug+NUrz8iaHIGgQLtA0MGZjb2fCOSLInMXlhbGlnTxqwwGKeg==",
+        "Authentication__Jwt__ExpirationMinutes": "60"
       }
     }
   }
