@@ -10,8 +10,7 @@ public class WordTranslation
 
     public WordTranslation(string languageCode, string text)
     {
-        LanguageCode = NormalizeRequired(languageCode, nameof(languageCode), DomainConstraints.LanguageCodeMaxLength)
-            .ToLowerInvariant();
+        LanguageCode = LanguageCodes.NormalizeSupported(languageCode, nameof(languageCode));
         Text = NormalizeRequired(text, nameof(text), DomainConstraints.WordTranslationTextMaxLength);
     }
 

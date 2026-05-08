@@ -6,11 +6,11 @@ namespace Word.Application.Mappings;
 
 public static class CategoryRecordMappings
 {
-    public static CategoryRecordDto ToCategoryRecordDto(this CategoryRecord categoryRecord)
+    public static CategoryRecordDto ToCategoryRecordDto(this CategoryRecord categoryRecord, string? languageCode)
     {
         var translation = LocalizedContentResolver.ResolveTranslation(
             categoryRecord.Category.Translations,
-            LocalizedContentResolver.DefaultLanguageCode,
+            languageCode,
             x => x.LanguageCode);
 
         return new CategoryRecordDto

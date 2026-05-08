@@ -33,10 +33,7 @@ public class WordExplanation
         string usage,
         string hint)
     {
-        var normalizedLanguageCode = NormalizeRequired(
-            languageCode,
-            nameof(languageCode),
-            DomainConstraints.LanguageCodeMaxLength).ToLowerInvariant();
+        var normalizedLanguageCode = LanguageCodes.NormalizeSupported(languageCode, nameof(languageCode));
 
         var normalizedWhatIs = NormalizeOptional(whatIs, DomainConstraints.WordExplanationWhatIsMaxLength);
         var normalizedMeaning = NormalizeOptional(meaning, DomainConstraints.WordExplanationMeaningMaxLength);

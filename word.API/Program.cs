@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Word.API.Middleware;
+using Word.API.Services;
 using Word.Application;
 using Word.Infrastructure;
 using Word.Infrastructure.Configurations;
@@ -38,6 +39,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHealthChecks();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IEffectiveLanguageResolver, EffectiveLanguageResolver>();
 
 var jwtSection = builder.Configuration.GetSection(JwtOptions.SectionName);
 var jwtOptions = jwtSection.Get<JwtOptions>() ?? new JwtOptions();

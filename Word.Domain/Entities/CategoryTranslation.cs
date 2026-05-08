@@ -10,8 +10,7 @@ public class CategoryTranslation
 
     public CategoryTranslation(string languageCode, string name, string description)
     {
-        LanguageCode = NormalizeRequired(languageCode, nameof(languageCode), DomainConstraints.LanguageCodeMaxLength)
-            .ToLowerInvariant();
+        LanguageCode = LanguageCodes.NormalizeSupported(languageCode, nameof(languageCode));
         Name = NormalizeRequired(name, nameof(name), DomainConstraints.CategoryNameMaxLength);
         Description = NormalizeRequired(description, nameof(description), DomainConstraints.CategoryDescriptionMaxLength);
     }

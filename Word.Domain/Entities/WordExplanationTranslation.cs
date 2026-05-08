@@ -16,8 +16,7 @@ public class WordExplanationTranslation
         string usage,
         string hint)
     {
-        LanguageCode = NormalizeRequired(languageCode, nameof(languageCode), DomainConstraints.LanguageCodeMaxLength)
-            .ToLowerInvariant();
+        LanguageCode = LanguageCodes.NormalizeSupported(languageCode, nameof(languageCode));
         WhatIs = NormalizeOptional(whatIs, DomainConstraints.WordExplanationWhatIsMaxLength);
         Meaning = NormalizeOptional(meaning, DomainConstraints.WordExplanationMeaningMaxLength);
         Translations = NormalizeOptional(translations, DomainConstraints.WordExplanationTranslationsMaxLength);

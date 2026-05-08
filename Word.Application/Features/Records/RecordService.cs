@@ -16,13 +16,16 @@ public class RecordService : IRecordService
     }
 
 
-    public async Task<CategoryRecordDto?> GetByCategoryIdAsync(int categoryId, CancellationToken cancellationToken = default)
+    public async Task<CategoryRecordDto?> GetByCategoryIdAsync(
+        int categoryId,
+        string? languageCode = null,
+        CancellationToken cancellationToken = default)
     {
         var record = await _categoryRecordRepository.GetByCategoryIdAsync(categoryId, cancellationToken);
 
         if (record is null)
             return null;
 
-        return record?.ToCategoryRecordDto();
+        return record.ToCategoryRecordDto(languageCode);
     }
 }

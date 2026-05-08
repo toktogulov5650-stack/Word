@@ -28,7 +28,7 @@ public class JwtTokenGenerator : IJwtTokenGenerator
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Email, user.Email),
             new(ClaimTypes.Name, user.Name),
-            new("preferred_language", user.PreferredLanguage) // НОВОЕ: язык в токене
+            new("preferred_language", user.PreferredLanguage)
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Key));

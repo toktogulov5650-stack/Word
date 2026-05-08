@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Word.API.Contracts.Tests;
+using Word.API.Services;
 using Word.Application.Abstractions.Services;
 using Word.Application.DTOs.Tests;
-using Word.API.Contracts.Tests;
 
 namespace Word.API.Controllers;
 
@@ -10,10 +11,14 @@ namespace Word.API.Controllers;
 public class TestsController : ControllerBase
 {
     private readonly ITestService _testService;
+    private readonly IEffectiveLanguageResolver _languageResolver;
 
-    public TestsController(ITestService testService)
+    public TestsController(
+        ITestService testService,
+        IEffectiveLanguageResolver languageResolver)
     {
         _testService = testService;
+        _languageResolver = languageResolver;
     }
 
     [HttpPost("start")]
@@ -21,10 +26,11 @@ public class TestsController : ControllerBase
         StartTestRequest request,
         CancellationToken cancellationToken = default)
     {
+        var effectiveLanguage = await _languageResolver.ResolveAsync(request.LanguageCode, cancellationToken);
         var dto = new StartTestRequestDto
         {
             CategoryId = request.CategoryId,
-            LanguageCode = request.LanguageCode
+            LanguageCode = effectiveLanguage
         };
 
         var result = await _testService.StartAsync(dto, cancellationToken);
@@ -79,7 +85,9 @@ public class TestsController : ControllerBase
     }
 
     [HttpPost("{testSessionId:int}/finish")]
-    public async Task<ActionResult<FinishTestResponse>> FinishAsync(int testSessionId, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<FinishTestResponse>> FinishAsync(
+        int testSessionId,
+        CancellationToken cancellationToken = default)
     {
         var result = await _testService.FinishAsync(testSessionId, cancellationToken);
 

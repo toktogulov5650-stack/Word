@@ -10,8 +10,7 @@ public class WordExampleTranslation
 
     public WordExampleTranslation(string languageCode, string text, string translation)
     {
-        LanguageCode = NormalizeRequired(languageCode, nameof(languageCode), DomainConstraints.LanguageCodeMaxLength)
-            .ToLowerInvariant();
+        LanguageCode = LanguageCodes.NormalizeSupported(languageCode, nameof(languageCode));
         Text = NormalizeOptional(text, DomainConstraints.WordExplanationExampleMaxLength);
         Translation = NormalizeOptional(translation, DomainConstraints.WordExplanationExampleMaxLength);
     }

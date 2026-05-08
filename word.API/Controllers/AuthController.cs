@@ -29,7 +29,7 @@ public class AuthController : ControllerBase
                 Name = request.Name,
                 Email = request.Email,
                 Password = request.Password,
-                PreferredLanguage = request.PreferredLanguage // НОВОЕ
+                PreferredLanguage = request.PreferredLanguage
             },
             cancellationToken);
 
@@ -60,7 +60,10 @@ public class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.IdToken))
             return BadRequest("IdToken is required");
 
-        var result = await _authService.SignInWithGoogleAsync(request.IdToken, cancellationToken);
+        var result = await _authService.SignInWithGoogleAsync(
+            request.IdToken,
+            request.PreferredLanguage,
+            cancellationToken);
 
         return Ok(MapAuthResponse(result));
     }
@@ -80,13 +83,7 @@ public class AuthController : ControllerBase
         if (user is null)
             return NotFound();
 
-        return Ok(new CurrentUserResponse
-        {
-            Id = user.Id,
-            Email = user.Email,
-            Name = user.Name,
-            PreferredLanguage = user.PreferredLanguage // НОВОЕ
-        });
+        return Ok(MapCurrentUserResponse(user));
     }
 
     [Authorize]
@@ -108,13 +105,7 @@ public class AuthController : ControllerBase
         if (user is null)
             return NotFound();
 
-        return Ok(new CurrentUserResponse
-        {
-            Id = user.Id,
-            Email = user.Email,
-            Name = user.Name,
-            PreferredLanguage = user.PreferredLanguage
-        });
+        return Ok(MapCurrentUserResponse(user));
     }
 
     private static AuthResponse MapAuthResponse(AuthResponseDto result)
@@ -122,13 +113,18 @@ public class AuthController : ControllerBase
         return new AuthResponse
         {
             AccessToken = result.AccessToken,
-            User = new CurrentUserResponse
-            {
-                Id = result.User.Id,
-                Email = result.User.Email,
-                Name = result.User.Name,
-                PreferredLanguage = result.User.PreferredLanguage // НОВОЕ
-            }
+            User = MapCurrentUserResponse(result.User)
+        };
+    }
+
+    private static CurrentUserResponse MapCurrentUserResponse(CurrentUserDto user)
+    {
+        return new CurrentUserResponse
+        {
+            Id = user.Id,
+            Email = user.Email,
+            Name = user.Name,
+            PreferredLanguage = user.PreferredLanguage
         };
     }
 }

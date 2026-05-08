@@ -37,10 +37,7 @@ public class WordEntity
 
     public void AddOrUpdateTranslation(string languageCode, string text)
     {
-        var normalizedLanguageCode = NormalizeRequired(
-            languageCode,
-            nameof(languageCode),
-            DomainConstraints.LanguageCodeMaxLength).ToLowerInvariant();
+        var normalizedLanguageCode = LanguageCodes.NormalizeSupported(languageCode, nameof(languageCode));
 
         var normalizedText = NormalizeRequired(
             text,

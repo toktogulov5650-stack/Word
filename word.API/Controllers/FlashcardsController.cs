@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Word.API.Contracts.Flashcards;
+using Word.API.Services;
 using Word.Application.Abstractions.Services;
 
 namespace Word.API.Controllers;
@@ -9,10 +10,14 @@ namespace Word.API.Controllers;
 public class FlashcardsController : ControllerBase
 {
     private readonly IFlashcardService _flashcardService;
+    private readonly IEffectiveLanguageResolver _languageResolver;
 
-    public FlashcardsController(IFlashcardService flashcardService)
+    public FlashcardsController(
+        IFlashcardService flashcardService,
+        IEffectiveLanguageResolver languageResolver)
     {
         _flashcardService = flashcardService;
+        _languageResolver = languageResolver;
     }
 
     [HttpGet("random")]
@@ -21,7 +26,8 @@ public class FlashcardsController : ControllerBase
         [FromQuery] int? excludeWordId = null,
         CancellationToken cancellationToken = default)
     {
-        var flashcard = await _flashcardService.GetRandomAsync(lang, excludeWordId, cancellationToken);
+        var effectiveLanguage = await _languageResolver.ResolveAsync(lang, cancellationToken);
+        var flashcard = await _flashcardService.GetRandomAsync(effectiveLanguage, excludeWordId, cancellationToken);
 
         return Ok(new FlashcardResponse
         {

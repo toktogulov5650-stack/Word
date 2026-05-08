@@ -16,6 +16,7 @@ public static class AuthSchemaInitializer
                 "Email" character varying(200) NOT NULL,
                 "GoogleId" character varying(200),
                 "PasswordHash" character varying(500),
+                "PreferredLanguage" character varying(2) NOT NULL DEFAULT 'ru',
                 "CreatedAtUtc" timestamp with time zone NOT NULL DEFAULT NOW(),
                 "LastLoginAtUtc" timestamp with time zone NOT NULL DEFAULT NOW()
             );
@@ -26,6 +27,13 @@ public static class AuthSchemaInitializer
             """
             ALTER TABLE "Users"
             ADD COLUMN IF NOT EXISTS "PasswordHash" character varying(500);
+            """,
+            cancellationToken);
+
+        await context.Database.ExecuteSqlRawAsync(
+            """
+            ALTER TABLE "Users"
+            ADD COLUMN IF NOT EXISTS "PreferredLanguage" character varying(2) NOT NULL DEFAULT 'ru';
             """,
             cancellationToken);
 

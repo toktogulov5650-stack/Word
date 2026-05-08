@@ -19,7 +19,7 @@ public class WordTranslationConfiguration : IEntityTypeConfiguration<WordTransla
         builder.Property(a => a.LanguageCode)
             .IsRequired()
             .HasMaxLength(DomainConstraints.LanguageCodeMaxLength)
-            .HasDefaultValue("ky");
+            .HasDefaultValue(LanguageCodes.Kyrgyz);
 
         builder.Property(a => a.Text)
             .IsRequired()

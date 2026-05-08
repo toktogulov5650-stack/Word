@@ -1,16 +1,15 @@
+using Word.Domain.Constants;
+
 namespace Word.Application.Localization;
 
 public static class LocalizedContentResolver
 {
-    public const string DefaultLanguageCode = "ru";
-    public const string SecondaryLanguageCode = "ky";
+    public const string DefaultLanguageCode = LanguageCodes.Default;
+    public const string SecondaryLanguageCode = LanguageCodes.Kyrgyz;
 
     public static string NormalizeRequestedLanguage(string? languageCode)
     {
-        if (string.IsNullOrWhiteSpace(languageCode))
-            return DefaultLanguageCode;
-
-        return languageCode.Trim().ToLowerInvariant();
+        return LanguageCodes.NormalizeOrDefault(languageCode);
     }
 
     public static T? ResolveTranslation<T>(

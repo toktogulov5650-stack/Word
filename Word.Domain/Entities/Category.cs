@@ -30,10 +30,7 @@ public class Category
 
     public void AddOrUpdateTranslation(string languageCode, string name, string description)
     {
-        var normalizedLanguageCode = NormalizeRequired(
-            languageCode,
-            nameof(languageCode),
-            DomainConstraints.LanguageCodeMaxLength).ToLowerInvariant();
+        var normalizedLanguageCode = LanguageCodes.NormalizeSupported(languageCode, nameof(languageCode));
 
         var normalizedName = NormalizeRequired(
             name,

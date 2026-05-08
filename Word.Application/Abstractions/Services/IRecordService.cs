@@ -5,5 +5,8 @@ namespace Word.Application.Abstractions.Services;
 
 public interface IRecordService
 {
-    Task<CategoryRecordDto?> GetByCategoryIdAsync(int categoryId, CancellationToken cancellationToken = default);
+    Task<CategoryRecordDto?> GetByCategoryIdAsync(
+        int categoryId,
+        string? languageCode = null,
+        CancellationToken cancellationToken = default);
 }

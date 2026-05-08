@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Word.Application.Abstractions.Services;
 using Word.API.Contracts.Categories;
+using Word.API.Services;
+using Word.Application.Abstractions.Services;
 
 namespace Word.API.Controllers;
 
@@ -9,10 +10,14 @@ namespace Word.API.Controllers;
 public class CategoriesController : ControllerBase
 {
     private readonly ICategoryService _categoryService;
+    private readonly IEffectiveLanguageResolver _languageResolver;
 
-    public CategoriesController(ICategoryService categoryService)
+    public CategoriesController(
+        ICategoryService categoryService,
+        IEffectiveLanguageResolver languageResolver)
     {
         _categoryService = categoryService;
+        _languageResolver = languageResolver;
     }
 
     [HttpGet]
@@ -20,7 +25,8 @@ public class CategoriesController : ControllerBase
         [FromQuery] string? lang = null,
         CancellationToken cancellationToken = default)
     {
-        var result = await _categoryService.GetAllAsync(lang, cancellationToken);
+        var effectiveLanguage = await _languageResolver.ResolveAsync(lang, cancellationToken);
+        var result = await _categoryService.GetAllAsync(effectiveLanguage, cancellationToken);
 
         var response = result.Select(dto => new CategoryResponse
         {

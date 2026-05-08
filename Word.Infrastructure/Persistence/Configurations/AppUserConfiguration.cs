@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Word.Domain.Constants;
 using Word.Domain.Entities;
 
 namespace Word.Infrastructure.Persistence.Configurations;
@@ -29,7 +30,7 @@ public class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
         builder.Property(x => x.PreferredLanguage)
             .IsRequired()
             .HasMaxLength(2)
-            .HasDefaultValue("ru");
+            .HasDefaultValue(LanguageCodes.Default);
 
         builder.Property(x => x.CreatedAtUtc)
             .IsRequired();

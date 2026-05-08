@@ -1,5 +1,7 @@
 namespace Word.Domain.Entities;
 
+using Word.Domain.Constants;
+
 public class WordExample
 {
     private readonly List<WordExampleTranslation> _translations = [];
@@ -24,7 +26,7 @@ public class WordExample
 
     public void AddOrUpdateTranslation(string languageCode, string text, string translation)
     {
-        var normalizedLanguageCode = NormalizeRequired(languageCode, nameof(languageCode), 10).ToLowerInvariant();
+        var normalizedLanguageCode = LanguageCodes.NormalizeSupported(languageCode, nameof(languageCode));
         var existingTranslation = _translations.FirstOrDefault(x =>
             string.Equals(x.LanguageCode, normalizedLanguageCode, StringComparison.OrdinalIgnoreCase));
 

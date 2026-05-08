@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Word.API.Contracts.WordExplanations;
+using Word.API.Services;
 using Word.Application.Abstractions.Services;
 using Word.Application.DTOs.WordExplanations;
-using Word.API.Contracts.WordExplanations;
 
 namespace Word.API.Controllers;
 
@@ -10,10 +11,14 @@ namespace Word.API.Controllers;
 public class WordExplanationsController : ControllerBase
 {
     private readonly IWordExplanationService _wordExplanationService;
+    private readonly IEffectiveLanguageResolver _languageResolver;
 
-    public WordExplanationsController(IWordExplanationService wordExplanationService)
+    public WordExplanationsController(
+        IWordExplanationService wordExplanationService,
+        IEffectiveLanguageResolver languageResolver)
     {
         _wordExplanationService = wordExplanationService;
+        _languageResolver = languageResolver;
     }
 
     [HttpGet("tests/{testSessionId:int}/unknown-words")]
@@ -43,10 +48,11 @@ public class WordExplanationsController : ControllerBase
         [FromQuery] string? lang = null,
         CancellationToken cancellationToken = default)
     {
-        var result = await _wordExplanationService.GetByWordIdAsync(wordId, lang, cancellationToken);
+        var effectiveLanguage = await _languageResolver.ResolveAsync(lang, cancellationToken);
+        var result = await _wordExplanationService.GetByWordIdAsync(wordId, effectiveLanguage, cancellationToken);
 
         if (result is null)
-            return NotFound("Разбор слова не найден");
+            return NotFound("Word explanation was not found.");
 
         return Ok(MapResponse(result));
     }
@@ -57,7 +63,8 @@ public class WordExplanationsController : ControllerBase
         [FromQuery] string? lang = null,
         CancellationToken cancellationToken = default)
     {
-        var result = await _wordExplanationService.GetByCategoryIdAsync(categoryId, lang, cancellationToken);
+        var effectiveLanguage = await _languageResolver.ResolveAsync(lang, cancellationToken);
+        var result = await _wordExplanationService.GetByCategoryIdAsync(categoryId, effectiveLanguage, cancellationToken);
         return Ok(result.Select(MapResponse).ToList());
     }
 

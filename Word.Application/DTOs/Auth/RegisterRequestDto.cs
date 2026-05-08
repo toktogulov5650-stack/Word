@@ -8,5 +8,5 @@ public class RegisterRequestDto
 
     public string Password { get; set; } = string.Empty;
 
-    public string? PreferredLanguage { get; set; } = "ru"; // Новое поле: ky или ru
+    public string? PreferredLanguage { get; set; }
 }

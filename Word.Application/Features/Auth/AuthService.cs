@@ -1,6 +1,7 @@
 using Word.Application.Abstractions.Persistence;
 using Word.Application.Abstractions.Services;
 using Word.Application.DTOs.Auth;
+using Word.Application.Localization;
 using Word.Domain.Entities;
 
 namespace Word.Application.Features.Auth;
@@ -33,7 +34,7 @@ public class AuthService : IAuthService
         var name = ValidateName(request.Name);
         var email = ValidateEmail(request.Email);
         var password = ValidatePassword(request.Password);
-        var preferredLanguage = ValidateLanguage(request.PreferredLanguage);
+        var preferredLanguage = LocalizedContentResolver.NormalizeRequestedLanguage(request.PreferredLanguage);
 
         var existingUser = await _userRepository.GetByEmailAsync(email, cancellationToken);
         var passwordHash = _passwordHasherService.HashPassword(password);
@@ -90,11 +91,13 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponseDto> SignInWithGoogleAsync(
         string idToken,
+        string? preferredLanguage,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(idToken))
             throw new ArgumentException("Google ID token is required.", nameof(idToken));
 
+        var normalizedPreferredLanguage = LocalizedContentResolver.NormalizeRequestedLanguage(preferredLanguage);
         var googleUser = await _googleTokenVerifier.VerifyAsync(idToken.Trim(), cancellationToken);
 
         if (string.IsNullOrWhiteSpace(googleUser.Email))
@@ -117,7 +120,7 @@ public class AuthService : IAuthService
                     googleUser.Email,
                     googleUser.GoogleId,
                     null,
-                    "ru");
+                    normalizedPreferredLanguage);
 
                 await _userRepository.AddAsync(user, cancellationToken);
             }
@@ -125,7 +128,6 @@ public class AuthService : IAuthService
             {
                 user.UpdateProfile(normalizedName, googleUser.Email);
                 user.SetGoogleId(googleUser.GoogleId);
-                user.SetPreferredLanguage("ru");
                 user.MarkLogin();
 
                 await _userRepository.UpdateAsync(user, cancellationToken);
@@ -149,13 +151,24 @@ public class AuthService : IAuthService
         if (user is null)
             return null;
 
-        return new CurrentUserDto
-        {
-            Id = user.Id,
-            Email = user.Email,
-            Name = user.Name,
-            PreferredLanguage = user.PreferredLanguage
-        };
+        return MapCurrentUser(user);
+    }
+
+    public async Task<CurrentUserDto?> ChangeUserLanguageAsync(
+        int userId,
+        string languageCode,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedLanguageCode = LocalizedContentResolver.NormalizeRequestedLanguage(languageCode);
+        var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+
+        if (user is null)
+            return null;
+
+        user.SetPreferredLanguage(normalizedLanguageCode);
+        await _userRepository.UpdateAsync(user, cancellationToken);
+
+        return MapCurrentUser(user);
     }
 
     private AuthResponseDto CreateAuthResponse(AppUser user)
@@ -165,27 +178,12 @@ public class AuthService : IAuthService
         return new AuthResponseDto
         {
             AccessToken = accessToken,
-            User = new CurrentUserDto
-            {
-                Id = user.Id,
-                Email = user.Email,
-                Name = user.Name,
-                PreferredLanguage = user.PreferredLanguage
-            }
+            User = MapCurrentUser(user)
         };
     }
 
-
-    public async Task<CurrentUserDto?> ChangeUserLanguageAsync(int userId, string languageCode, CancellationToken cancellationToken = default)
+    private static CurrentUserDto MapCurrentUser(AppUser user)
     {
-        var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
-
-        if (user is null)
-            return null;
-
-        user.SetPreferredLanguage(languageCode);
-        await _userRepository.UpdateAsync(user, cancellationToken);
-
         return new CurrentUserDto
         {
             Id = user.Id,
@@ -222,20 +220,5 @@ public class AuthService : IAuthService
             throw new ArgumentException($"Password must be at least {MinimumPasswordLength} characters long.", nameof(password));
 
         return normalizedPassword;
-    }
-
-    private static string ValidateLanguage(string? languageCode)
-    {
-        if (string.IsNullOrWhiteSpace(languageCode))
-            return "ru"; // Default язык
-
-        var normalized = languageCode.Trim().ToLowerInvariant();
-
-        return normalized switch
-        {
-            "ky" => "ky",
-            "ru" => "ru",
-            _ => "ru" // Fallback на русский
-        };
     }
 }
