@@ -26,6 +26,11 @@ public class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
         builder.Property(x => x.PasswordHash)
             .HasMaxLength(500);
 
+        builder.Property(x => x.PreferredLanguage)
+            .IsRequired()
+            .HasMaxLength(2)
+            .HasDefaultValue("ru");
+
         builder.Property(x => x.CreatedAtUtc)
             .IsRequired();
 

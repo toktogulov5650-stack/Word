@@ -1,10 +1,9 @@
-﻿
-
-namespace Word.Application.DTOs.Auth;
+﻿namespace Word.Application.DTOs.Auth;
 
 public class CurrentUserDto
 {
     public int Id { get; set; }
     public string Email { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+    public string PreferredLanguage { get; set; } = "ru"; // Новое поле: ky или ru
 }

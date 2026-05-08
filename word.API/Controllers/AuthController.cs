@@ -28,7 +28,8 @@ public class AuthController : ControllerBase
             {
                 Name = request.Name,
                 Email = request.Email,
-                Password = request.Password
+                Password = request.Password,
+                PreferredLanguage = request.PreferredLanguage // НОВОЕ
             },
             cancellationToken);
 
@@ -84,6 +85,35 @@ public class AuthController : ControllerBase
             Id = user.Id,
             Email = user.Email,
             Name = user.Name,
+            PreferredLanguage = user.PreferredLanguage // НОВОЕ
+        });
+    }
+
+    [Authorize]
+    [HttpPut("language")]
+    public async Task<ActionResult<CurrentUserResponse>> ChangeLanguageAsync(
+        [FromBody] ChangeLanguageRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.LanguageCode))
+            return BadRequest("LanguageCode is required");
+
+        var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(userIdValue, out var userId))
+            return Unauthorized();
+
+        var user = await _authService.ChangeUserLanguageAsync(userId, request.LanguageCode, cancellationToken);
+
+        if (user is null)
+            return NotFound();
+
+        return Ok(new CurrentUserResponse
+        {
+            Id = user.Id,
+            Email = user.Email,
+            Name = user.Name,
+            PreferredLanguage = user.PreferredLanguage
         });
     }
 
@@ -96,7 +126,8 @@ public class AuthController : ControllerBase
             {
                 Id = result.User.Id,
                 Email = result.User.Email,
-                Name = result.User.Name
+                Name = result.User.Name,
+                PreferredLanguage = result.User.PreferredLanguage // НОВОЕ
             }
         };
     }

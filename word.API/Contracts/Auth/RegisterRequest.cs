@@ -14,4 +14,7 @@ public class RegisterRequest
     [Required]
     [MinLength(6)]
     public string Password { get; set; } = string.Empty;
+
+    [StringLength(2, MinimumLength = 2)]
+    public string? PreferredLanguage { get; set; } = "ru"; // НОВОЕ: ky или ru
 }

@@ -6,12 +6,13 @@ public class AppUser
     {
     }
 
-    public AppUser(string name, string email, string? googleId, string? passwordHash)
+    public AppUser(string name, string email, string? googleId, string? passwordHash, string preferredLanguage = "ru")
     {
         Name = NormalizeRequired(name, nameof(name));
         Email = NormalizeEmail(email);
         GoogleId = googleId;
         PasswordHash = passwordHash;
+        PreferredLanguage = ValidateLanguage(preferredLanguage);
         CreatedAtUtc = DateTime.UtcNow;
         LastLoginAtUtc = DateTime.UtcNow;
     }
@@ -21,6 +22,7 @@ public class AppUser
     public string Email { get; private set; } = string.Empty;
     public string? GoogleId { get; private set; }
     public string? PasswordHash { get; private set; }
+    public string PreferredLanguage { get; private set; } = "ru"; // Новое поле: кыргызский или русский
     public DateTime CreatedAtUtc { get; private set; }
     public DateTime LastLoginAtUtc { get; private set; }
 
@@ -50,6 +52,27 @@ public class AppUser
     public void MarkLogin()
     {
         LastLoginAtUtc = DateTime.UtcNow;
+    }
+
+    public void SetPreferredLanguage(string languageCode)
+    {
+        PreferredLanguage = ValidateLanguage(languageCode);
+    }
+
+    private static string ValidateLanguage(string languageCode)
+    {
+        if (string.IsNullOrWhiteSpace(languageCode))
+            return "ru"; // Default язык
+
+        var normalized = languageCode.Trim().ToLowerInvariant();
+
+        // Допустимые языки: ky (кыргызский) и ru (русский)
+        return normalized switch
+        {
+            "ky" => "ky",
+            "ru" => "ru",
+            _ => "ru" // Default fallback
+        };
     }
 
     private static string NormalizeRequired(string value, string paramName)
