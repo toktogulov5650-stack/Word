@@ -1,36 +1,85 @@
-﻿using Word.Domain.Constants;
-
+using Word.Domain.Constants;
 
 namespace Word.Domain.Entities;
 
 public class Category
 {
-    public int Id { get; private set; }
+    private readonly List<WordEntity> _words = [];
+    private readonly List<CategoryTranslation> _translations = [];
 
-    public string Name { get; private set; } = string.Empty;
-
-    public string Description { get; private set; } = string.Empty;
-
-    public bool IsActive { get; private set; }
-
-    private readonly List<WordEntity> _words = new();
-    public IReadOnlyCollection<WordEntity> Words => _words;
-
-    public Category(string name, string description)
+    private Category()
     {
+    }
 
-        if (name.Length > DomainConstraints.CategoryNameMaxLength)
-        {
-            throw new Exception("Category name is too long");
-        }
-
-        if (description.Length > DomainConstraints.CategoryDescriptionMaxLength)
-        {
-            throw new Exception("Category description is too long");
-        }
-
-        Name = name;
-        Description = description;
+    public Category(string? imageUrl = null)
+    {
+        ImageUrl = NormalizeOptional(imageUrl, DomainConstraints.CategoryImageUrlMaxLength);
         IsActive = true;
+    }
+
+    public int Id { get; private set; }
+    public string ImageUrl { get; private set; } = string.Empty;
+    public bool IsActive { get; private set; }
+    public IReadOnlyCollection<WordEntity> Words => _words;
+    public IReadOnlyCollection<CategoryTranslation> Translations => _translations;
+
+    public void UpdateImageUrl(string? imageUrl)
+    {
+        ImageUrl = NormalizeOptional(imageUrl, DomainConstraints.CategoryImageUrlMaxLength);
+    }
+
+    public void AddOrUpdateTranslation(string languageCode, string name, string description)
+    {
+        var normalizedLanguageCode = NormalizeRequired(
+            languageCode,
+            nameof(languageCode),
+            DomainConstraints.LanguageCodeMaxLength).ToLowerInvariant();
+
+        var normalizedName = NormalizeRequired(
+            name,
+            nameof(name),
+            DomainConstraints.CategoryNameMaxLength);
+
+        var normalizedDescription = NormalizeRequired(
+            description,
+            nameof(description),
+            DomainConstraints.CategoryDescriptionMaxLength);
+
+        var existingTranslation = _translations.FirstOrDefault(x =>
+            string.Equals(x.LanguageCode, normalizedLanguageCode, StringComparison.OrdinalIgnoreCase));
+
+        if (existingTranslation is not null)
+        {
+            existingTranslation.Update(normalizedName, normalizedDescription);
+            return;
+        }
+
+        _translations.Add(new CategoryTranslation(normalizedLanguageCode, normalizedName, normalizedDescription));
+    }
+
+    private static string NormalizeRequired(string value, string paramName, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            throw new ArgumentException($"{paramName} is required.", paramName);
+
+        var normalizedValue = value.Trim();
+
+        if (normalizedValue.Length > maxLength)
+            throw new ArgumentOutOfRangeException(paramName, $"{paramName} must be at most {maxLength} characters long.");
+
+        return normalizedValue;
+    }
+
+    private static string NormalizeOptional(string? value, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return string.Empty;
+
+        var normalizedValue = value.Trim();
+
+        if (normalizedValue.Length > maxLength)
+            throw new ArgumentOutOfRangeException(nameof(value), $"value must be at most {maxLength} characters long.");
+
+        return normalizedValue;
     }
 }

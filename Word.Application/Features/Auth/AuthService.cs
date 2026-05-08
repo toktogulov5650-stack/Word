@@ -7,6 +7,8 @@ namespace Word.Application.Features.Auth;
 
 public class AuthService : IAuthService
 {
+    private const int MinimumPasswordLength = 6;
+
     private readonly IUserRepository _userRepository;
     private readonly IGoogleTokenVerifier _googleTokenVerifier;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
@@ -28,20 +30,19 @@ public class AuthService : IAuthService
         RegisterRequestDto request,
         CancellationToken cancellationToken = default)
     {
-        ValidateEmailPasswordRequest(request.Email, request.Password);
+        var name = ValidateName(request.Name);
+        var email = ValidateEmail(request.Email);
+        var password = ValidatePassword(request.Password);
 
-        if (string.IsNullOrWhiteSpace(request.Name))
-            throw new ArgumentException("Имя обязательно");
-
-        var existingUser = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
-        var passwordHash = _passwordHasherService.HashPassword(request.Password);
+        var existingUser = await _userRepository.GetByEmailAsync(email, cancellationToken);
+        var passwordHash = _passwordHasherService.HashPassword(password);
 
         if (existingUser is not null)
         {
             if (!string.IsNullOrWhiteSpace(existingUser.PasswordHash))
-                throw new InvalidOperationException("Пользователь с таким email уже существует");
+                throw new InvalidOperationException("A user with this email already exists.");
 
-            existingUser.UpdateProfile(request.Name, request.Email);
+            existingUser.UpdateProfile(name, email);
             existingUser.SetPasswordHash(passwordHash);
             existingUser.MarkLogin();
 
@@ -51,8 +52,8 @@ public class AuthService : IAuthService
         }
 
         var user = new AppUser(
-            request.Name,
-            request.Email,
+            name,
+            email,
             null,
             passwordHash);
 
@@ -65,17 +66,18 @@ public class AuthService : IAuthService
         LoginRequestDto request,
         CancellationToken cancellationToken = default)
     {
-        ValidateEmailPasswordRequest(request.Email, request.Password);
+        var email = ValidateEmail(request.Email);
+        var password = ValidatePassword(request.Password);
 
-        var user = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
+        var user = await _userRepository.GetByEmailAsync(email, cancellationToken);
 
         if (user is null || string.IsNullOrWhiteSpace(user.PasswordHash))
-            throw new UnauthorizedAccessException("Неверный email или пароль");
+            throw new UnauthorizedAccessException("Invalid email or password.");
 
-        var isValidPassword = _passwordHasherService.VerifyPassword(request.Password, user.PasswordHash);
+        var isValidPassword = _passwordHasherService.VerifyPassword(password, user.PasswordHash);
 
         if (!isValidPassword)
-            throw new UnauthorizedAccessException("Неверный email или пароль");
+            throw new UnauthorizedAccessException("Invalid email or password.");
 
         user.MarkLogin();
         await _userRepository.UpdateAsync(user, cancellationToken);
@@ -87,7 +89,17 @@ public class AuthService : IAuthService
         string idToken,
         CancellationToken cancellationToken = default)
     {
-        var googleUser = await _googleTokenVerifier.VerifyAsync(idToken, cancellationToken);
+        if (string.IsNullOrWhiteSpace(idToken))
+            throw new ArgumentException("Google ID token is required.", nameof(idToken));
+
+        var googleUser = await _googleTokenVerifier.VerifyAsync(idToken.Trim(), cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(googleUser.Email))
+            throw new InvalidOperationException("Google account did not provide an email address.");
+
+        var normalizedName = string.IsNullOrWhiteSpace(googleUser.Name)
+            ? googleUser.Email
+            : googleUser.Name.Trim();
 
         var user = await _userRepository.GetByGoogleIdAsync(googleUser.GoogleId, cancellationToken);
 
@@ -98,7 +110,7 @@ public class AuthService : IAuthService
             if (user is null)
             {
                 user = new AppUser(
-                    googleUser.Name,
+                    normalizedName,
                     googleUser.Email,
                     googleUser.GoogleId,
                     null);
@@ -107,7 +119,7 @@ public class AuthService : IAuthService
             }
             else
             {
-                user.UpdateProfile(googleUser.Name, googleUser.Email);
+                user.UpdateProfile(normalizedName, googleUser.Email);
                 user.SetGoogleId(googleUser.GoogleId);
                 user.MarkLogin();
 
@@ -116,7 +128,7 @@ public class AuthService : IAuthService
         }
         else
         {
-            user.UpdateProfile(googleUser.Name, googleUser.Email);
+            user.UpdateProfile(normalizedName, googleUser.Email);
             user.MarkLogin();
 
             await _userRepository.UpdateAsync(user, cancellationToken);
@@ -156,15 +168,32 @@ public class AuthService : IAuthService
         };
     }
 
-    private static void ValidateEmailPasswordRequest(string email, string password)
+    private static string ValidateName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Name is required.", nameof(name));
+
+        return name.Trim();
+    }
+
+    private static string ValidateEmail(string email)
     {
         if (string.IsNullOrWhiteSpace(email))
-            throw new ArgumentException("Email обязателен");
+            throw new ArgumentException("Email is required.", nameof(email));
 
+        return email.Trim();
+    }
+
+    private static string ValidatePassword(string password)
+    {
         if (string.IsNullOrWhiteSpace(password))
-            throw new ArgumentException("Пароль обязателен");
+            throw new ArgumentException("Password is required.", nameof(password));
 
-        if (password.Length < 6)
-            throw new ArgumentException("Пароль должен быть не меньше 6 символов");
+        var normalizedPassword = password.Trim();
+
+        if (normalizedPassword.Length < MinimumPasswordLength)
+            throw new ArgumentException($"Password must be at least {MinimumPasswordLength} characters long.", nameof(password));
+
+        return normalizedPassword;
     }
 }

@@ -17,6 +17,7 @@ public class WordRepository : IWordRepository
     public async Task<IReadOnlyCollection<WordEntity>> GetByCategoryIdAsync(int categoryId, CancellationToken cancellationToken = default)
     {
         return await _appDbContext.WordEntities
+            .AsNoTracking()
             .Include(a => a.WordTranslations)
             .Where(a => a.CategoryId == categoryId && a.IsActive)
             .ToListAsync(cancellationToken);
@@ -25,6 +26,7 @@ public class WordRepository : IWordRepository
     public async Task<WordEntity?> GetRandomAsync(int? excludeWordId = null, CancellationToken cancellationToken = default)
     {
         var query = _appDbContext.WordEntities
+            .AsNoTracking()
             .Include(a => a.WordTranslations)
             .Where(a => a.IsActive && a.WordTranslations.Any());
 
@@ -50,6 +52,7 @@ public class WordRepository : IWordRepository
         var randomWordId = wordIds[Random.Shared.Next(wordIds.Count)];
 
         return await _appDbContext.WordEntities
+            .AsNoTracking()
             .Include(a => a.WordTranslations)
             .FirstOrDefaultAsync(a => a.Id == randomWordId, cancellationToken);
     }

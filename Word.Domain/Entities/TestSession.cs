@@ -9,6 +9,7 @@ public class TestSession
     public int Id { get; set; }
     public int CategoryId { get; set; }
     public Category Category { get; set; } = null!;
+    public string LanguageCode { get; set; } = string.Empty;
     public TestSessionStatus Status { get; set; }
     public int CorrectAnswerCount { get; set; }
     public int TotalQuestionCount { get; set; }

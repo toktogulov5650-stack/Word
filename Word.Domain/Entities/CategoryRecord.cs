@@ -1,4 +1,4 @@
-﻿namespace Word.Domain.Entities;
+namespace Word.Domain.Entities;
 
 public class CategoryRecord
 {
@@ -8,6 +8,12 @@ public class CategoryRecord
 
     public CategoryRecord(int categoryId, int bestScore)
     {
+        if (categoryId <= 0)
+            throw new ArgumentOutOfRangeException(nameof(categoryId), "Category ID must be greater than zero.");
+
+        if (bestScore < 0)
+            throw new ArgumentOutOfRangeException(nameof(bestScore), "Best score cannot be negative.");
+
         CategoryId = categoryId;
         BestScore = bestScore;
     }
@@ -19,6 +25,9 @@ public class CategoryRecord
 
     public void UpdateBestScore(int bestScore)
     {
+        if (bestScore < 0)
+            throw new ArgumentOutOfRangeException(nameof(bestScore), "Best score cannot be negative.");
+
         BestScore = bestScore;
     }
 }

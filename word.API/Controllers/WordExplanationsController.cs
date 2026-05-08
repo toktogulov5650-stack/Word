@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Word.Application.Abstractions.Services;
+using Word.Application.DTOs.WordExplanations;
 using Word.API.Contracts.WordExplanations;
 
 namespace Word.API.Controllers;
@@ -16,8 +17,9 @@ public class WordExplanationsController : ControllerBase
     }
 
     [HttpGet("tests/{testSessionId:int}/unknown-words")]
-    public async Task<ActionResult<IReadOnlyCollection<UnknownWordResponse>>>
-        GetMarkedUnknownByTestSessionIdAsync(int testSessionId, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<IReadOnlyCollection<UnknownWordResponse>>> GetMarkedUnknownByTestSessionIdAsync(
+        int testSessionId,
+        CancellationToken cancellationToken = default)
     {
         var result = await _wordExplanationService.GetMarkedUnknownByTestSessionIdAsync(
             testSessionId,
@@ -35,57 +37,49 @@ public class WordExplanationsController : ControllerBase
         return Ok(response);
     }
 
-
     [HttpGet("words/{wordId:int}")]
     public async Task<ActionResult<WordExplanationResponse>> GetByWordIdAsync(
         int wordId,
+        [FromQuery] string? lang = null,
         CancellationToken cancellationToken = default)
     {
-        var result = await _wordExplanationService.GetByWordIdAsync(wordId, cancellationToken);
+        var result = await _wordExplanationService.GetByWordIdAsync(wordId, lang, cancellationToken);
 
         if (result is null)
             return NotFound("Разбор слова не найден");
 
-        var response = new WordExplanationResponse
-        {
-            WordId = result.WordId,
-            EnglishWord = result.EnglishWord,
-            WhatIs = result.WhatIs,
-            Meaning = result.Meaning,
-            Translations = result.Translations,
-            Usage = result.Usage,
-            Example1 = result.Example1,
-            Example2 = result.Example2,
-            Example3 = result.Example3,
-            Hint = result.Hint
-        };
-
-        return Ok(response);
+        return Ok(MapResponse(result));
     }
 
     [HttpGet("categories/{categoryId:int}")]
     public async Task<ActionResult<IReadOnlyCollection<WordExplanationResponse>>> GetByCategoryIdAsync(
         int categoryId,
+        [FromQuery] string? lang = null,
         CancellationToken cancellationToken = default)
     {
-        var result = await _wordExplanationService.GetByCategoryIdAsync(categoryId, cancellationToken);
+        var result = await _wordExplanationService.GetByCategoryIdAsync(categoryId, lang, cancellationToken);
+        return Ok(result.Select(MapResponse).ToList());
+    }
 
-        var response = result
-            .Select(x => new WordExplanationResponse
-            {
-                WordId = x.WordId,
-                EnglishWord = x.EnglishWord,
-                WhatIs = x.WhatIs,
-                Meaning = x.Meaning,
-                Translations = x.Translations,
-                Usage = x.Usage,
-                Example1 = x.Example1,
-                Example2 = x.Example2,
-                Example3 = x.Example3,
-                Hint = x.Hint
-            })
-            .ToList();
-
-        return Ok(response);
+    private static WordExplanationResponse MapResponse(WordExplanationDto dto)
+    {
+        return new WordExplanationResponse
+        {
+            WordId = dto.WordId,
+            EnglishWord = dto.EnglishWord,
+            WhatIs = dto.WhatIs,
+            Meaning = dto.Meaning,
+            Translations = dto.Translations,
+            Usage = dto.Usage,
+            Hint = dto.Hint,
+            Examples = dto.Examples
+                .Select(x => new WordExampleResponse
+                {
+                    Order = x.Order,
+                    Text = x.Text,
+                    Translation = x.Translation
+                })
+                .ToList()
+        };
     }
 }

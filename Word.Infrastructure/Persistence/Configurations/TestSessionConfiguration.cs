@@ -1,7 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Word.Domain.Constants;
 using Word.Domain.Entities;
-
 
 namespace Word.Infrastructure.Persistence.Configurations;
 
@@ -21,6 +21,11 @@ public class TestSessionConfiguration : IEntityTypeConfiguration<TestSession>
             .HasForeignKey(a => a.CategoryId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.Property(a => a.LanguageCode)
+            .IsRequired()
+            .HasMaxLength(DomainConstraints.LanguageCodeMaxLength)
+            .HasDefaultValue("ru");
+
         builder.Property(a => a.Status)
             .IsRequired();
 
@@ -33,6 +38,5 @@ public class TestSessionConfiguration : IEntityTypeConfiguration<TestSession>
         builder.HasMany(a => a.TestQuestions)
             .WithOne(a => a.TestSession)
             .HasForeignKey(a => a.TestSessionId);
-            
     }
 }

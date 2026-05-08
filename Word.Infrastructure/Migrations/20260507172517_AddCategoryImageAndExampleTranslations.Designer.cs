@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Word.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using Word.Infrastructure.Persistence;
 namespace Word.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260507172517_AddCategoryImageAndExampleTranslations")]
+    partial class AddCategoryImageAndExampleTranslations
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -73,6 +76,11 @@ namespace Word.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<string>("ImageUrl")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -82,6 +90,11 @@ namespace Word.Infrastructure.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
@@ -107,40 +120,6 @@ namespace Word.Infrastructure.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("CategoryRecord", (string)null);
-                });
-
-            modelBuilder.Entity("Word.Domain.Entities.CategoryTranslation", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("LanguageCode")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CategoryId", "LanguageCode")
-                        .IsUnique();
-
-                    b.ToTable("CategoryTranslations", (string)null);
                 });
 
             modelBuilder.Entity("Word.Domain.Entities.TestQuestion", b =>
@@ -192,13 +171,6 @@ namespace Word.Infrastructure.Migrations
                     b.Property<int>("CorrectAnswerCount")
                         .HasColumnType("integer");
 
-                    b.Property<string>("LanguageCode")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
-                        .HasDefaultValue("ru");
-
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -238,62 +210,6 @@ namespace Word.Infrastructure.Migrations
                     b.ToTable("Words", (string)null);
                 });
 
-            modelBuilder.Entity("Word.Domain.Entities.WordExample", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("WordExplanationId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("WordExplanationId", "SortOrder")
-                        .IsUnique();
-
-                    b.ToTable("WordExamples", (string)null);
-                });
-
-            modelBuilder.Entity("Word.Domain.Entities.WordExampleTranslation", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("LanguageCode")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("Translation")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<int>("WordExampleId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("WordExampleId", "LanguageCode")
-                        .IsUnique();
-
-                    b.ToTable("WordExampleTranslations", (string)null);
-                });
-
             modelBuilder.Entity("Word.Domain.Entities.WordExplanation", b =>
                 {
                     b.Property<int>("Id")
@@ -302,34 +218,46 @@ namespace Word.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("WordId")
-                        .HasColumnType("integer");
+                    b.Property<string>("Example1")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("WordId")
-                        .IsUnique();
-
-                    b.ToTable("WordExplanations", (string)null);
-                });
-
-            modelBuilder.Entity("Word.Domain.Entities.WordExplanationTranslation", b =>
-                {
-                    b.Property<int>("Id")
+                    b.Property<string>("Example1Translation")
+                        .IsRequired()
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasDefaultValue("");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    b.Property<string>("Example2")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Example2Translation")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasDefaultValue("");
+
+                    b.Property<string>("Example3")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Example3Translation")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasDefaultValue("");
 
                     b.Property<string>("Hint")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
-
-                    b.Property<string>("LanguageCode")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
 
                     b.Property<string>("Meaning")
                         .IsRequired()
@@ -351,15 +279,15 @@ namespace Word.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<int>("WordExplanationId")
+                    b.Property<int>("WordId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("WordExplanationId", "LanguageCode")
+                    b.HasIndex("WordId")
                         .IsUnique();
 
-                    b.ToTable("WordExplanationTranslations", (string)null);
+                    b.ToTable("WordExplanations", (string)null);
                 });
 
             modelBuilder.Entity("Word.Domain.Entities.WordTranslation", b =>
@@ -370,14 +298,7 @@ namespace Word.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("LanguageCode")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
-                        .HasDefaultValue("ky");
-
-                    b.Property<string>("Text")
+                    b.Property<string>("KyrgyzWord")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -387,8 +308,7 @@ namespace Word.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("WordId", "LanguageCode", "Text")
-                        .IsUnique();
+                    b.HasIndex("WordId");
 
                     b.ToTable("WordTranslations", (string)null);
                 });
@@ -397,17 +317,6 @@ namespace Word.Infrastructure.Migrations
                 {
                     b.HasOne("Word.Domain.Entities.Category", "Category")
                         .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-                });
-
-            modelBuilder.Entity("Word.Domain.Entities.CategoryTranslation", b =>
-                {
-                    b.HasOne("Word.Domain.Entities.Category", "Category")
-                        .WithMany("Translations")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -456,28 +365,6 @@ namespace Word.Infrastructure.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("Word.Domain.Entities.WordExample", b =>
-                {
-                    b.HasOne("Word.Domain.Entities.WordExplanation", "WordExplanation")
-                        .WithMany("Examples")
-                        .HasForeignKey("WordExplanationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("WordExplanation");
-                });
-
-            modelBuilder.Entity("Word.Domain.Entities.WordExampleTranslation", b =>
-                {
-                    b.HasOne("Word.Domain.Entities.WordExample", "WordExample")
-                        .WithMany("Translations")
-                        .HasForeignKey("WordExampleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("WordExample");
-                });
-
             modelBuilder.Entity("Word.Domain.Entities.WordExplanation", b =>
                 {
                     b.HasOne("Word.Domain.Entities.WordEntity", "Word")
@@ -487,17 +374,6 @@ namespace Word.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Word");
-                });
-
-            modelBuilder.Entity("Word.Domain.Entities.WordExplanationTranslation", b =>
-                {
-                    b.HasOne("Word.Domain.Entities.WordExplanation", "WordExplanation")
-                        .WithMany("Translations")
-                        .HasForeignKey("WordExplanationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("WordExplanation");
                 });
 
             modelBuilder.Entity("Word.Domain.Entities.WordTranslation", b =>
@@ -513,8 +389,6 @@ namespace Word.Infrastructure.Migrations
 
             modelBuilder.Entity("Word.Domain.Entities.Category", b =>
                 {
-                    b.Navigation("Translations");
-
                     b.Navigation("Words");
                 });
 
@@ -528,18 +402,6 @@ namespace Word.Infrastructure.Migrations
                     b.Navigation("Explanation");
 
                     b.Navigation("WordTranslations");
-                });
-
-            modelBuilder.Entity("Word.Domain.Entities.WordExample", b =>
-                {
-                    b.Navigation("Translations");
-                });
-
-            modelBuilder.Entity("Word.Domain.Entities.WordExplanation", b =>
-                {
-                    b.Navigation("Examples");
-
-                    b.Navigation("Translations");
                 });
 #pragma warning restore 612, 618
         }

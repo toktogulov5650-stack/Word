@@ -17,16 +17,17 @@ public class FlashcardsController : ControllerBase
 
     [HttpGet("random")]
     public async Task<ActionResult<FlashcardResponse>> GetRandomAsync(
+        [FromQuery] string? lang = null,
         [FromQuery] int? excludeWordId = null,
         CancellationToken cancellationToken = default)
     {
-        var flashcard = await _flashcardService.GetRandomAsync(excludeWordId, cancellationToken);
+        var flashcard = await _flashcardService.GetRandomAsync(lang, excludeWordId, cancellationToken);
 
         return Ok(new FlashcardResponse
         {
             WordId = flashcard.WordId,
             EnglishWord = flashcard.EnglishWord,
-            KyrgyzTranslations = flashcard.KyrgyzTranslations
+            Translations = flashcard.Translations
         });
     }
 }

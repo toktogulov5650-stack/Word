@@ -80,9 +80,6 @@ if (builder.Configuration.GetValue<bool>("Swagger:Enabled"))
     app.UseSwaggerUI();
 }
 
-app.UseDefaultFiles();
-app.UseStaticFiles();
-
 app.UseMiddleware<ApiExceptionMiddleware>();
 app.UseCors("Frontend");
 

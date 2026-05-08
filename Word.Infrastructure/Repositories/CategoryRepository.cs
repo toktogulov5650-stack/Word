@@ -1,8 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Word.Application.Abstractions.Persistence;
-using Word.Infrastructure.Persistence;
 using Word.Domain.Entities;
-
+using Word.Infrastructure.Persistence;
 
 namespace Word.Infrastructure.Repositories;
 
@@ -18,15 +17,18 @@ public class CategoryRepository : ICategoryRepository
     public async Task<IReadOnlyCollection<Category>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await _appDbContext.Categories
-            .Where(a => a.IsActive)
+            .AsNoTracking()
+            .Include(x => x.Translations)
+            .Where(x => x.IsActive)
             .ToListAsync(cancellationToken);
     }
-
 
     public async Task<Category?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _appDbContext.Categories
-            .Where(a => a.IsActive)
-            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+            .AsNoTracking()
+            .Include(x => x.Translations)
+            .Where(x => x.IsActive)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 }

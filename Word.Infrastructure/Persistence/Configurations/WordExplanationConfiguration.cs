@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Word.Domain.Entities;
 
@@ -15,41 +15,19 @@ public class WordExplanationConfiguration : IEntityTypeConfiguration<WordExplana
         builder.Property(x => x.WordId)
             .IsRequired();
 
-        builder.Property(x => x.WhatIs)
-            .HasMaxLength(500)
-            .IsRequired();
-
-        builder.Property(x => x.Meaning)
-            .HasMaxLength(1000)
-            .IsRequired();
-
-        builder.Property(x => x.Translations)
-            .HasMaxLength(1000)
-            .IsRequired();
-
-        builder.Property(x => x.Usage)
-            .HasMaxLength(1000)
-            .IsRequired();
-
-        builder.Property(x => x.Example1)
-            .HasMaxLength(500)
-            .IsRequired();
-
-        builder.Property(x => x.Example2)
-            .HasMaxLength(500)
-            .IsRequired();
-
-        builder.Property(x => x.Example3)
-            .HasMaxLength(500)
-            .IsRequired();
-
-        builder.Property(x => x.Hint)
-            .HasMaxLength(500)
-            .IsRequired();
-
         builder.HasOne(x => x.Word)
             .WithOne(x => x.Explanation)
             .HasForeignKey<WordExplanation>(x => x.WordId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(x => x.Translations)
+            .WithOne(x => x.WordExplanation)
+            .HasForeignKey(x => x.WordExplanationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(x => x.Examples)
+            .WithOne(x => x.WordExplanation)
+            .HasForeignKey(x => x.WordExplanationId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

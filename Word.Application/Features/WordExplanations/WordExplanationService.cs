@@ -1,6 +1,8 @@
 using Word.Application.Abstractions.Persistence;
 using Word.Application.Abstractions.Services;
 using Word.Application.DTOs.WordExplanations;
+using Word.Application.Localization;
+using Word.Domain.Entities;
 
 namespace Word.Application.Features.WordExplanations;
 
@@ -8,80 +10,48 @@ public class WordExplanationService : IWordExplanationService
 {
     private readonly IWordExplanationRepository _wordExplanationRepository;
     private readonly ITestQuestionRepository _testQuestionRepository;
+    private readonly ITestSessionRepository _testSessionRepository;
 
     public WordExplanationService(
         IWordExplanationRepository wordExplanationRepository,
-        ITestQuestionRepository testQuestionRepository)
+        ITestQuestionRepository testQuestionRepository,
+        ITestSessionRepository testSessionRepository)
     {
         _wordExplanationRepository = wordExplanationRepository;
         _testQuestionRepository = testQuestionRepository;
+        _testSessionRepository = testSessionRepository;
     }
 
-    public async Task<WordExplanationDto?> GetByWordIdAsync(int wordId, CancellationToken cancellationToken = default)
+    public async Task<WordExplanationDto?> GetByWordIdAsync(
+        int wordId,
+        string? languageCode = null,
+        CancellationToken cancellationToken = default)
     {
         var wordExplanation = await _wordExplanationRepository.GetByWordIdAsync(wordId, cancellationToken);
-
-        if (wordExplanation is null)
-            return null;
-
-        return new WordExplanationDto
-        {
-            WordId = wordExplanation.WordId,
-            EnglishWord = wordExplanation.Word.EnglishWord,
-            WhatIs = wordExplanation.WhatIs,
-            Meaning = wordExplanation.Meaning,
-            Translations = wordExplanation.Translations,
-            Usage = wordExplanation.Usage,
-            Example1 = wordExplanation.Example1,
-            Example2 = wordExplanation.Example2,
-            Example3 = wordExplanation.Example3,
-            Hint = wordExplanation.Hint
-        };
+        return wordExplanation is null ? null : MapWordExplanation(wordExplanation, languageCode);
     }
 
     public async Task<IReadOnlyCollection<WordExplanationDto>> GetByWordIdsAsync(
         IReadOnlyCollection<int> wordIds,
+        string? languageCode = null,
         CancellationToken cancellationToken = default)
     {
         var wordExplanations = await _wordExplanationRepository.GetByWordIdsAsync(wordIds, cancellationToken);
 
         return wordExplanations
-            .Select(wordExplanations => new WordExplanationDto
-            {
-                WordId = wordExplanations.WordId,
-                EnglishWord = wordExplanations.Word.EnglishWord,
-                WhatIs = wordExplanations.WhatIs,
-                Meaning = wordExplanations.Meaning,
-                Translations = wordExplanations.Translations,
-                Usage = wordExplanations.Usage,
-                Example1 = wordExplanations.Example1,
-                Example2 = wordExplanations.Example2,
-                Example3 = wordExplanations.Example3,
-                Hint = wordExplanations.Hint
-            })
+            .Select(wordExplanation => MapWordExplanation(wordExplanation, languageCode))
             .ToList();
     }
 
     public async Task<IReadOnlyCollection<WordExplanationDto>> GetByCategoryIdAsync(
-       int categoryId,
-       CancellationToken cancellationToken = default)
+        int categoryId,
+        string? languageCode = null,
+        CancellationToken cancellationToken = default)
     {
         var wordExplanations = await _wordExplanationRepository.GetByCategoryIdAsync(categoryId, cancellationToken);
 
         return wordExplanations
-            .Select(wordExplanation => new WordExplanationDto
-            {
-                WordId = wordExplanation.WordId,
-                EnglishWord = wordExplanation.Word.EnglishWord,
-                WhatIs = wordExplanation.WhatIs,
-                Meaning = wordExplanation.Meaning,
-                Translations = wordExplanation.Translations,
-                Usage = wordExplanation.Usage,
-                Example1 = wordExplanation.Example1,
-                Example2 = wordExplanation.Example2,
-                Example3 = wordExplanation.Example3,
-                Hint = wordExplanation.Hint
-            })
+            .Select(wordExplanation => MapWordExplanation(wordExplanation, languageCode))
             .ToList();
     }
 
@@ -89,18 +59,64 @@ public class WordExplanationService : IWordExplanationService
         int testSessionId,
         CancellationToken cancellationToken = default)
     {
-        var testQuestion = await _testQuestionRepository.
-            GetMarkedUnknownByTestSessionIdAsync(testSessionId, cancellationToken);
+        var testSession = await _testSessionRepository.GetByIdAsync(testSessionId, cancellationToken);
 
-        return testQuestion
+        if (testSession is null)
+            throw new KeyNotFoundException("Test session was not found.");
+
+        var testQuestions = await _testQuestionRepository
+            .GetMarkedUnknownByTestSessionIdAsync(testSessionId, cancellationToken);
+
+        return testQuestions
             .Select(testQuestion => new UnknownWordDto
             {
                 WordId = testQuestion.WordId,
                 EnglishWord = testQuestion.Word.EnglishWord,
-                PrimaryTranslation = testQuestion.Word.WordTranslations
-                    .Select(x => x.KyrgyzWord)
+                PrimaryTranslation = LocalizedContentResolver.ResolveTranslations(
+                        testQuestion.Word.WordTranslations,
+                        testSession.LanguageCode,
+                        x => x.LanguageCode)
+                    .Select(x => x.Text)
                     .FirstOrDefault() ?? string.Empty
             })
             .ToList();
+    }
+
+    private static WordExplanationDto MapWordExplanation(
+        WordExplanation wordExplanation,
+        string? languageCode)
+    {
+        var translation = LocalizedContentResolver.ResolveTranslation(
+            wordExplanation.Translations,
+            languageCode,
+            x => x.LanguageCode);
+
+        return new WordExplanationDto
+        {
+            WordId = wordExplanation.WordId,
+            EnglishWord = wordExplanation.Word.EnglishWord,
+            WhatIs = translation?.WhatIs ?? string.Empty,
+            Meaning = translation?.Meaning ?? string.Empty,
+            Translations = translation?.Translations ?? string.Empty,
+            Usage = translation?.Usage ?? string.Empty,
+            Hint = translation?.Hint ?? string.Empty,
+            Examples = wordExplanation.Examples
+                .OrderBy(x => x.SortOrder)
+                .Select(example =>
+                {
+                    var exampleTranslation = LocalizedContentResolver.ResolveTranslation(
+                        example.Translations,
+                        languageCode,
+                        x => x.LanguageCode);
+
+                    return new WordExampleDto
+                    {
+                        Order = example.SortOrder,
+                        Text = exampleTranslation?.Text ?? string.Empty,
+                        Translation = exampleTranslation?.Translation ?? string.Empty
+                    };
+                })
+                .ToList()
+        };
     }
 }

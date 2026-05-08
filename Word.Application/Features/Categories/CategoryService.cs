@@ -1,8 +1,8 @@
-﻿using Word.Application.Abstractions.Persistence;
+using Word.Application.Abstractions.Persistence;
 using Word.Application.Abstractions.Services;
 using Word.Application.DTOs.Categories;
+using Word.Application.Localization;
 using Word.Application.Mappings;
-
 
 namespace Word.Application.Features.Categories;
 
@@ -15,10 +15,15 @@ public class CategoryService : ICategoryService
         _categoryRepository = categoryRepository;
     }
 
-
-    public async Task<IReadOnlyCollection<CategoryDto>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<CategoryDto>> GetAllAsync(
+        string? languageCode = null,
+        CancellationToken cancellationToken = default)
     {
         var categoryList = await _categoryRepository.GetAllAsync(cancellationToken);
-        return categoryList.Select(a => a.ToCategoryDto()).ToList();
+        var normalizedLanguageCode = LocalizedContentResolver.NormalizeRequestedLanguage(languageCode);
+
+        return categoryList
+            .Select(category => category.ToCategoryDto(normalizedLanguageCode))
+            .ToList();
     }
 }

@@ -19,6 +19,7 @@ public class TestSessionRepository : ITestSessionRepository
     public async Task<TestSession?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _appDbContext.TestSessions
+            .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }
 

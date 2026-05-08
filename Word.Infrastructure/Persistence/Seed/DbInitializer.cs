@@ -18,38 +18,90 @@ public static class DbInitializer
         AppDbContext context,
         CancellationToken cancellationToken)
     {
-        var categories = new List<Category>
+        var categories = new[]
         {
-            new("Этиштер", "Негизги англис тилиндеги этиштер."),
-            new("Негизги сөздөр", "Көп колдонулган негизги сөздөр."),
-            new("Саякат", "Саякат жана жол жүрүү үчүн сөздөр."),
-            new("Жемиштер", "Мөмө-жемиштердин аталыштары.")
+            new
+            {
+                ImageUrl = "/images/categories/verbs.png",
+                KyrgyzName = "Этиштер",
+                KyrgyzDescription = "Негизги англис тилиндеги этиштер.",
+                RussianName = "Глаголы",
+                RussianDescription = "Основные английские глаголы."
+            },
+            new
+            {
+                ImageUrl = "/images/categories/basic-words.png",
+                KyrgyzName = "Негизги сөздөр",
+                KyrgyzDescription = "Көп колдонулган негизги сөздөр.",
+                RussianName = "Базовые слова",
+                RussianDescription = "Часто используемые базовые слова."
+            },
+            new
+            {
+                ImageUrl = "/images/categories/travel.png",
+                KyrgyzName = "Саякат",
+                KyrgyzDescription = "Саякат жана жол жүрүү үчүн сөздөр.",
+                RussianName = "Путешествия",
+                RussianDescription = "Слова для путешествий и дороги."
+            },
+            new
+            {
+                ImageUrl = "/images/categories/fruits.png",
+                KyrgyzName = "Жемиштер",
+                KyrgyzDescription = "Мөмө-жемиштердин аталыштары.",
+                RussianName = "Фрукты",
+                RussianDescription = "Названия фруктов."
+            }
         };
 
-        var existingCategoryNames = await context.Categories
-            .Select(x => x.Name)
+        var existingCategories = await context.Categories
+            .Include(x => x.Translations)
             .ToListAsync(cancellationToken);
 
-        var existingNames = new HashSet<string>(existingCategoryNames, StringComparer.OrdinalIgnoreCase);
+        var existingCategoriesByKyrgyzName = existingCategories
+            .Select(category => new
+            {
+                Category = category,
+                KyrgyzTranslation = category.Translations.FirstOrDefault(x =>
+                    string.Equals(x.LanguageCode, "ky", StringComparison.OrdinalIgnoreCase))
+            })
+            .Where(x => x.KyrgyzTranslation is not null)
+            .ToDictionary(x => x.KyrgyzTranslation!.Name, x => x.Category, StringComparer.OrdinalIgnoreCase);
 
-        var missingCategories = categories
-            .Where(x => !existingNames.Contains(x.Name))
-            .ToList();
+        var hasChanges = false;
 
-        if (missingCategories.Count == 0)
+        foreach (var categoryDefinition in categories)
         {
-            return;
+            if (!existingCategoriesByKyrgyzName.TryGetValue(categoryDefinition.KyrgyzName, out var category))
+            {
+                category = new Category(categoryDefinition.ImageUrl);
+                category.AddOrUpdateTranslation("ky", categoryDefinition.KyrgyzName, categoryDefinition.KyrgyzDescription);
+                category.AddOrUpdateTranslation("ru", categoryDefinition.RussianName, categoryDefinition.RussianDescription);
+                await context.Categories.AddAsync(category, cancellationToken);
+                hasChanges = true;
+                continue;
+            }
+
+            if (!string.Equals(category.ImageUrl, categoryDefinition.ImageUrl, StringComparison.Ordinal))
+            {
+                category.UpdateImageUrl(categoryDefinition.ImageUrl);
+                hasChanges = true;
+            }
+
+            category.AddOrUpdateTranslation("ky", categoryDefinition.KyrgyzName, categoryDefinition.KyrgyzDescription);
+            category.AddOrUpdateTranslation("ru", categoryDefinition.RussianName, categoryDefinition.RussianDescription);
+            hasChanges = true;
         }
 
-        await context.Categories.AddRangeAsync(missingCategories, cancellationToken);
-        await context.SaveChangesAsync(cancellationToken);
+        if (hasChanges)
+            await context.SaveChangesAsync(cancellationToken);
     }
 
     private static async Task SeedWordsAsync(
         AppDbContext context,
         CancellationToken cancellationToken)
     {
-        var wordsByCategory = new Dictionary<string, IReadOnlyCollection<(string EnglishWord, string KyrgyzWord)>>(
+        var wordsByCategory = new Dictionary<string, IReadOnlyCollection<(string EnglishWord, string KyrgyzText)>>(
             StringComparer.OrdinalIgnoreCase)
         {
             ["Этиштер"] =
@@ -148,53 +200,50 @@ public static class DbInitializer
 
         var categoryNames = wordsByCategory.Keys.ToList();
 
-        var categories = await context.Categories
-            .Where(x => categoryNames.Contains(x.Name))
-            .ToDictionaryAsync(x => x.Name, x => x.Id, StringComparer.OrdinalIgnoreCase, cancellationToken);
+        var categories = await context.CategoryTranslations
+            .Where(x => x.LanguageCode == "ky" && categoryNames.Contains(x.Name))
+            .Select(x => new { x.Name, x.CategoryId })
+            .ToDictionaryAsync(x => x.Name, x => x.CategoryId, StringComparer.OrdinalIgnoreCase, cancellationToken);
 
         if (categories.Count == 0)
-        {
             return;
-        }
 
         var existingWords = await context.WordEntities
-            .Select(x => new { x.CategoryId, x.EnglishWord })
+            .Include(x => x.WordTranslations)
             .ToListAsync(cancellationToken);
 
-        var existingWordKeys = new HashSet<string>(
-            existingWords.Select(x => CreateWordKey(x.CategoryId, x.EnglishWord)),
+        var existingWordsByKey = existingWords.ToDictionary(
+            x => CreateWordKey(x.CategoryId, x.EnglishWord),
             StringComparer.OrdinalIgnoreCase);
 
-        var wordsToAdd = new List<WordEntity>();
+        var hasChanges = false;
 
         foreach (var category in wordsByCategory)
         {
             if (!categories.TryGetValue(category.Key, out var categoryId))
-            {
                 continue;
-            }
 
             foreach (var word in category.Value)
             {
                 var wordKey = CreateWordKey(categoryId, word.EnglishWord);
 
-                if (existingWordKeys.Contains(wordKey))
+                if (!existingWordsByKey.TryGetValue(wordKey, out var existingWord))
                 {
+                    existingWord = new WordEntity(word.EnglishWord, categoryId);
+                    existingWord.AddOrUpdateTranslation("ky", word.KyrgyzText);
+                    await context.WordEntities.AddAsync(existingWord, cancellationToken);
+                    existingWordsByKey[wordKey] = existingWord;
+                    hasChanges = true;
                     continue;
                 }
 
-                wordsToAdd.Add(new WordEntity(word.EnglishWord, word.KyrgyzWord, categoryId));
-                existingWordKeys.Add(wordKey);
+                existingWord.AddOrUpdateTranslation("ky", word.KyrgyzText);
+                hasChanges = true;
             }
         }
 
-        if (wordsToAdd.Count == 0)
-        {
-            return;
-        }
-
-        await context.WordEntities.AddRangeAsync(wordsToAdd, cancellationToken);
-        await context.SaveChangesAsync(cancellationToken);
+        if (hasChanges)
+            await context.SaveChangesAsync(cancellationToken);
     }
 
     private static string CreateWordKey(int categoryId, string englishWord)

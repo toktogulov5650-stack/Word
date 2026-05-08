@@ -8,30 +8,34 @@ public class WordTranslation
     {
     }
 
-    public WordTranslation(string kyrgyzWord)
+    public WordTranslation(string languageCode, string text)
     {
-        kyrgyzWord = NormalizeRequired(kyrgyzWord, nameof(kyrgyzWord));
-
-        if (kyrgyzWord.Length > DomainConstraints.KyrgyzWordMaxLength)
-        {
-            throw new Exception("Word KyrgyzWord is too long");
-        }
-
-        KyrgyzWord = kyrgyzWord;
+        LanguageCode = NormalizeRequired(languageCode, nameof(languageCode), DomainConstraints.LanguageCodeMaxLength)
+            .ToLowerInvariant();
+        Text = NormalizeRequired(text, nameof(text), DomainConstraints.WordTranslationTextMaxLength);
     }
 
     public int Id { get; private set; }
     public int WordId { get; private set; }
-    public string KyrgyzWord { get; private set; } = string.Empty;
+    public string LanguageCode { get; private set; } = string.Empty;
+    public string Text { get; private set; } = string.Empty;
     public WordEntity Word { get; private set; } = null!;
 
-    private static string NormalizeRequired(string value, string paramName)
+    public void UpdateText(string text)
+    {
+        Text = NormalizeRequired(text, nameof(text), DomainConstraints.WordTranslationTextMaxLength);
+    }
+
+    private static string NormalizeRequired(string value, string paramName, int maxLength)
     {
         if (string.IsNullOrWhiteSpace(value))
-        {
             throw new ArgumentException($"{paramName} is required.", paramName);
-        }
 
-        return value.Trim();
+        var normalizedValue = value.Trim();
+
+        if (normalizedValue.Length > maxLength)
+            throw new ArgumentOutOfRangeException(paramName, $"{paramName} must be at most {maxLength} characters long.");
+
+        return normalizedValue;
     }
 }

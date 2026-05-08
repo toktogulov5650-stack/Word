@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Word.Application.Abstractions.Services;
 using Word.Application.DTOs.Tests;
 using Word.API.Contracts.Tests;
@@ -23,7 +23,8 @@ public class TestsController : ControllerBase
     {
         var dto = new StartTestRequestDto
         {
-            CategoryId = request.CategoryId
+            CategoryId = request.CategoryId,
+            LanguageCode = request.LanguageCode
         };
 
         var result = await _testService.StartAsync(dto, cancellationToken);
@@ -42,9 +43,10 @@ public class TestsController : ControllerBase
         return Ok(response);
     }
 
-
     [HttpPost("answer")]
-    public async Task<ActionResult<SubmitAnswerResponse>> SubmitAnswerAsync(SubmitAnswerRequest request, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<SubmitAnswerResponse>> SubmitAnswerAsync(
+        SubmitAnswerRequest request,
+        CancellationToken cancellationToken = default)
     {
         var dto = new SubmitAnswerRequestDto
         {
@@ -54,7 +56,6 @@ public class TestsController : ControllerBase
             IsMarkedUnknown = request.IsMarkedUnknown
         };
 
-
         var result = await _testService.SubmitAnswerAsync(dto, cancellationToken);
 
         var response = new SubmitAnswerResponse
@@ -63,7 +64,6 @@ public class TestsController : ControllerBase
             CorrectAnswerCount = result.CorrectAnswerCount,
             IsFinished = result.IsFinished
         };
-
 
         if (result.CurrentQuestion is not null)
         {
@@ -77,7 +77,6 @@ public class TestsController : ControllerBase
 
         return Ok(response);
     }
-
 
     [HttpPost("{testSessionId:int}/finish")]
     public async Task<ActionResult<FinishTestResponse>> FinishAsync(int testSessionId, CancellationToken cancellationToken = default)

@@ -4,6 +4,8 @@ namespace Word.API.Middleware;
 
 public class ApiExceptionMiddleware
 {
+    private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
+
     private readonly RequestDelegate _next;
     private readonly ILogger<ApiExceptionMiddleware> _logger;
 
@@ -23,13 +25,16 @@ public class ApiExceptionMiddleware
         }
         catch (Exception exception)
         {
-            _logger.LogError(exception, "Request failed");
+            _logger.LogError(exception, "Request failed. TraceId: {TraceId}", context.TraceIdentifier);
             await WriteErrorResponseAsync(context, exception);
         }
     }
 
     private static async Task WriteErrorResponseAsync(HttpContext context, Exception exception)
     {
+        if (context.Response.HasStarted)
+            return;
+
         var statusCode = exception switch
         {
             ArgumentException => StatusCodes.Status400BadRequest,
@@ -41,13 +46,17 @@ public class ApiExceptionMiddleware
 
         var payload = new
         {
-            title = exception.Message,
-            status = statusCode
+            title = statusCode == StatusCodes.Status500InternalServerError
+                ? "An unexpected error occurred."
+                : exception.Message,
+            status = statusCode,
+            traceId = context.TraceIdentifier
         };
 
+        context.Response.Clear();
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/json";
 
-        await context.Response.WriteAsync(JsonSerializer.Serialize(payload));
+        await context.Response.WriteAsync(JsonSerializer.Serialize(payload, SerializerOptions));
     }
 }

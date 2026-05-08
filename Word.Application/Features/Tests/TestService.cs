@@ -1,6 +1,7 @@
 using Word.Application.Abstractions.Persistence;
 using Word.Application.Abstractions.Services;
 using Word.Application.DTOs.Tests;
+using Word.Application.Localization;
 using Word.Domain.Entities;
 using Word.Domain.Enums;
 
@@ -8,6 +9,8 @@ namespace Word.Application.Features.Tests;
 
 public class TestService : ITestService
 {
+    private const int MinimumAnswerOptions = 4;
+
     private readonly ITestSessionRepository _testSessionRepository;
     private readonly ITestQuestionRepository _testQuestionRepository;
     private readonly ICategoryRepository _categoryRepository;
@@ -32,22 +35,29 @@ public class TestService : ITestService
         StartTestRequestDto request,
         CancellationToken cancellationToken = default)
     {
+        if (request.CategoryId <= 0)
+            throw new ArgumentException("Category ID must be greater than zero.", nameof(request.CategoryId));
+
         var category = await _categoryRepository.GetByIdAsync(request.CategoryId, cancellationToken);
 
         if (category is null)
-            throw new KeyNotFoundException("Р’С‹Р±СЂР°РЅРЅР°СЏ РєР°С‚РµРіРѕСЂРёСЏ РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚");
+            throw new KeyNotFoundException("Category was not found.");
 
-        var words = (await _wordRepository.GetByCategoryIdAsync(request.CategoryId, cancellationToken)).ToList();
+        var normalizedLanguageCode = LocalizedContentResolver.NormalizeRequestedLanguage(request.LanguageCode);
+        var words = (await _wordRepository.GetByCategoryIdAsync(request.CategoryId, cancellationToken))
+            .Where(x => ResolveWordTranslations(x, normalizedLanguageCode).Count > 0)
+            .ToList();
 
-        if (!words.Any())
-            throw new InvalidOperationException("Р’ СЌС‚РѕР№ РєР°С‚РµРіРѕСЂРёРё РЅРµС‚ СЃР»РѕРІ");
+        if (words.Count == 0)
+            throw new InvalidOperationException("This category does not contain any active words with translations.");
 
-        if (words.Count < 4)
-            throw new InvalidOperationException("Р”Р»СЏ С‚РµСЃС‚Р° РЅСѓР¶РЅРѕ РјРёРЅРёРјСѓРј 4 СЃР»РѕРІР° РІ РєР°С‚РµРіРѕСЂРёРё");
+        if (words.Count < MinimumAnswerOptions)
+            throw new InvalidOperationException($"At least {MinimumAnswerOptions} words are required to start a test.");
 
         var testSession = new TestSession
         {
             CategoryId = request.CategoryId,
+            LanguageCode = normalizedLanguageCode,
             Status = TestSessionStatus.InProgress,
             CorrectAnswerCount = 0,
             TotalQuestionCount = words.Count
@@ -71,18 +81,10 @@ public class TestService : ITestService
 
         await _testQuestionRepository.AddRangeAsync(testQuestions, cancellationToken);
 
-        var firstQuestion = testQuestions.OrderBy(x => x.QuestionOrder).First();
-        var currentWord = shuffledWords.First(x => x.Id == firstQuestion.WordId);
-
         return new StartTestResponseDto
         {
             TestSessionId = testSession.Id,
-            CurrentQuestion = new CurrentQuestionDto
-            {
-                WordId = currentWord.Id,
-                EnglishWord = currentWord.EnglishWord,
-                AnswerOptions = GenerateAnswerOptions(currentWord, words)
-            }
+            CurrentQuestion = BuildCurrentQuestion(shuffledWords[0], words, normalizedLanguageCode)
         };
     }
 
@@ -90,41 +92,28 @@ public class TestService : ITestService
         SubmitAnswerRequestDto request,
         CancellationToken cancellationToken = default)
     {
+        ValidateSubmitAnswerRequest(request);
+
         var testSession = await _testSessionRepository.GetByIdAsync(request.TestSessionId, cancellationToken);
 
         if (testSession is null)
-            throw new KeyNotFoundException("РўРµСЃС‚РѕРІР°СЏ СЃРµСЃСЃРёСЏ РЅРµ РЅР°Р№РґРµРЅР°");
+            throw new KeyNotFoundException("Test session was not found.");
 
         if (testSession.Status == TestSessionStatus.Completed)
-            throw new InvalidOperationException("РўРµСЃС‚ СѓР¶Рµ Р·Р°РІРµСЂС€РµРЅ");
+            throw new InvalidOperationException("This test session has already been completed.");
 
         var currentQuestion = await _testQuestionRepository
             .GetByTestSessionIdAndWordIdAsync(request.TestSessionId, request.WordId, cancellationToken);
 
         if (currentQuestion is null)
-            throw new KeyNotFoundException("Р’РѕРїСЂРѕСЃ РЅРµ РЅР°Р№РґРµРЅ");
+            throw new KeyNotFoundException("Question was not found in this test session.");
 
         if (currentQuestion.IsAnswered)
-            throw new InvalidOperationException("РќР° СЌС‚РѕС‚ РІРѕРїСЂРѕСЃ СѓР¶Рµ РѕС‚РІРµС‚РёР»Рё");
+            throw new InvalidOperationException("This question has already been answered.");
 
-        bool isCorrect;
-
-        if (request.IsMarkedUnknown)
-        {
-            currentQuestion.MarkUnknown();
-            currentQuestion.MarkAnswered(false);
-            isCorrect = false;
-        }
-        else
-        {
-            isCorrect = currentQuestion.Word.WordTranslations
-                .Any(x => string.Equals(
-                    x.KyrgyzWord,
-                    request.SelectedAnswer,
-                    StringComparison.OrdinalIgnoreCase));
-
-            currentQuestion.MarkAnswered(isCorrect);
-        }
+        var isCorrect = request.IsMarkedUnknown
+            ? MarkQuestionAsUnknown(currentQuestion)
+            : CheckAnswer(currentQuestion, request.SelectedAnswer, testSession.LanguageCode);
 
         await _testQuestionRepository.UpdateAsync(currentQuestion, cancellationToken);
 
@@ -149,20 +138,19 @@ public class TestService : ITestService
 
         await _testSessionRepository.UpdateAsync(testSession, cancellationToken);
 
-        var words = (await _wordRepository.GetByCategoryIdAsync(testSession.CategoryId, cancellationToken)).ToList();
-        var nextWord = words.First(x => x.Id == nextQuestion.WordId);
+        var words = (await _wordRepository.GetByCategoryIdAsync(testSession.CategoryId, cancellationToken))
+            .Where(x => ResolveWordTranslations(x, testSession.LanguageCode).Count > 0)
+            .ToList();
+
+        var nextWord = words.FirstOrDefault(x => x.Id == nextQuestion.WordId)
+            ?? throw new KeyNotFoundException("The next word for this test session was not found.");
 
         return new SubmitAnswerResponseDto
         {
             IsCorrect = isCorrect,
             CorrectAnswerCount = testSession.CorrectAnswerCount,
             IsFinished = false,
-            CurrentQuestion = new CurrentQuestionDto
-            {
-                WordId = nextWord.Id,
-                EnglishWord = nextWord.EnglishWord,
-                AnswerOptions = GenerateAnswerOptions(nextWord, words)
-            }
+            CurrentQuestion = BuildCurrentQuestion(nextWord, words, testSession.LanguageCode)
         };
     }
 
@@ -170,10 +158,13 @@ public class TestService : ITestService
         int testSessionId,
         CancellationToken cancellationToken = default)
     {
+        if (testSessionId <= 0)
+            throw new ArgumentException("Test session ID must be greater than zero.", nameof(testSessionId));
+
         var testSession = await _testSessionRepository.GetByIdAsync(testSessionId, cancellationToken);
 
         if (testSession is null)
-            throw new KeyNotFoundException("РўРµСЃС‚РѕРІР°СЏ СЃРµСЃСЃРёСЏ РЅРµ РЅР°Р№РґРµРЅР°");
+            throw new KeyNotFoundException("Test session was not found.");
 
         if (testSession.Status != TestSessionStatus.Completed)
         {
@@ -201,35 +192,89 @@ public class TestService : ITestService
         };
     }
 
+    private static CurrentQuestionDto BuildCurrentQuestion(
+        WordEntity word,
+        IReadOnlyCollection<WordEntity> words,
+        string languageCode)
+    {
+        return new CurrentQuestionDto
+        {
+            WordId = word.Id,
+            EnglishWord = word.EnglishWord,
+            AnswerOptions = GenerateAnswerOptions(word, words, languageCode)
+        };
+    }
+
+    private static void ValidateSubmitAnswerRequest(SubmitAnswerRequestDto request)
+    {
+        if (request.TestSessionId <= 0)
+            throw new ArgumentException("Test session ID must be greater than zero.", nameof(request.TestSessionId));
+
+        if (request.WordId <= 0)
+            throw new ArgumentException("Word ID must be greater than zero.", nameof(request.WordId));
+
+        if (!request.IsMarkedUnknown && string.IsNullOrWhiteSpace(request.SelectedAnswer))
+            throw new ArgumentException("Selected answer is required when the word is not marked as unknown.", nameof(request.SelectedAnswer));
+    }
+
+    private static bool MarkQuestionAsUnknown(TestQuestion currentQuestion)
+    {
+        currentQuestion.MarkUnknown();
+        currentQuestion.MarkAnswered(false);
+        return false;
+    }
+
+    private static bool CheckAnswer(TestQuestion currentQuestion, string selectedAnswer, string languageCode)
+    {
+        var normalizedAnswer = selectedAnswer.Trim();
+
+        var isCorrect = ResolveWordTranslations(currentQuestion.Word, languageCode)
+            .Any(x => string.Equals(x, normalizedAnswer, StringComparison.OrdinalIgnoreCase));
+
+        currentQuestion.MarkAnswered(isCorrect);
+        return isCorrect;
+    }
+
     private static IReadOnlyCollection<string> GenerateAnswerOptions(
         WordEntity currentWord,
-        IReadOnlyCollection<WordEntity> words)
+        IReadOnlyCollection<WordEntity> words,
+        string languageCode)
     {
-        var currentTranslations = currentWord.WordTranslations
-            .Select(x => x.KyrgyzWord)
+        var currentTranslations = ResolveWordTranslations(currentWord, languageCode)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         var correctAnswer = currentTranslations.FirstOrDefault();
 
         if (string.IsNullOrWhiteSpace(correctAnswer))
-            throw new InvalidOperationException("Р”Р»СЏ СЃР»РѕРІР° РЅРµС‚ РїРµСЂРµРІРѕРґР°");
+            throw new InvalidOperationException("The current word does not have any translations.");
 
         var wrongAnswersPool = words
             .Where(x => x.Id != currentWord.Id)
-            .SelectMany(x => x.WordTranslations.Select(t => t.KyrgyzWord))
+            .SelectMany(x => ResolveWordTranslations(x, languageCode))
             .Where(x => currentTranslations.All(y => !string.Equals(y, x, StringComparison.OrdinalIgnoreCase)))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(_ => Guid.NewGuid())
             .ToList();
 
-        if (wrongAnswersPool.Count < 3)
-            throw new InvalidOperationException("РќРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ СѓРЅРёРєР°Р»СЊРЅС‹С… РІР°СЂРёР°РЅС‚РѕРІ РѕС‚РІРµС‚Р° РґР»СЏ РІРѕРїСЂРѕСЃР°");
+        if (wrongAnswersPool.Count < MinimumAnswerOptions - 1)
+            throw new InvalidOperationException("Not enough unique answer options were found for this word.");
 
         return wrongAnswersPool
-            .Take(3)
+            .Take(MinimumAnswerOptions - 1)
             .Append(correctAnswer)
             .OrderBy(_ => Guid.NewGuid())
+            .ToList();
+    }
+
+    private static IReadOnlyCollection<string> ResolveWordTranslations(WordEntity word, string? languageCode)
+    {
+        return LocalizedContentResolver.ResolveTranslations(
+                word.WordTranslations,
+                languageCode,
+                x => x.LanguageCode)
+            .Select(x => x.Text)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
 }

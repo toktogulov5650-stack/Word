@@ -17,6 +17,7 @@ public class UserRepository : IUserRepository
     public async Task<AppUser?> GetByGoogleIdAsync(string googleId, CancellationToken cancellationToken = default)
     {
         return await _appDbContext.Users
+            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.GoogleId == googleId, cancellationToken);
     }
 
@@ -25,12 +26,14 @@ public class UserRepository : IUserRepository
         var normalizedEmail = email.Trim().ToLowerInvariant();
 
         return await _appDbContext.Users
+            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Email == normalizedEmail, cancellationToken);
     }
 
     public async Task<AppUser?> GetByIdAsync(int userId, CancellationToken cancellationToken = default)
     {
         return await _appDbContext.Users
+            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
     }
 

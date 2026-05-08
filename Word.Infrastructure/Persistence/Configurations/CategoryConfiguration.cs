@@ -1,7 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Word.Domain.Constants;
 using Word.Domain.Entities;
-
 
 namespace Word.Infrastructure.Persistence.Configurations;
 
@@ -13,11 +13,14 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
 
         builder.HasKey(a => a.Id);
 
-        builder.Property(a => a.Name)
+        builder.Property(a => a.ImageUrl)
             .IsRequired()
-            .HasMaxLength(100);
+            .HasMaxLength(DomainConstraints.CategoryImageUrlMaxLength)
+            .HasDefaultValue(string.Empty);
 
-        builder.Property(a => a.Description)
-            .HasMaxLength(200);
+        builder.HasMany(a => a.Translations)
+            .WithOne(a => a.Category)
+            .HasForeignKey(a => a.CategoryId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

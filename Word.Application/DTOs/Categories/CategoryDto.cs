@@ -13,4 +13,7 @@ public class CategoryDto
 
     [MaxLength(200)]
     public string Description { get; set; } = string.Empty;
+
+    [MaxLength(500)]
+    public string ImageUrl { get; set; } = string.Empty;
 }
