@@ -23,5 +23,8 @@ public class CategoryRecordConfiguration : IEntityTypeConfiguration<CategoryReco
 
         builder.Property(a => a.BestScore)
             .IsRequired();
+
+        builder.Property(a => a.BestTotalQuestionCount)
+            .IsRequired();
     }
 }

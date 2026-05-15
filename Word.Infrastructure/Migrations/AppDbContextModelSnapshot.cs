@@ -106,6 +106,9 @@ namespace Word.Infrastructure.Migrations
                     b.Property<int>("BestScore")
                         .HasColumnType("integer");
 
+                    b.Property<int>("BestTotalQuestionCount")
+                        .HasColumnType("integer");
+
                     b.Property<int>("CategoryId")
                         .HasColumnType("integer");
 

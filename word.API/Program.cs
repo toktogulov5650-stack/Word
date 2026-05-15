@@ -6,8 +6,6 @@ using Word.API.Services;
 using Word.Application;
 using Word.Infrastructure;
 using Word.Infrastructure.Configurations;
-using Word.Infrastructure.Persistence;
-using Word.Infrastructure.Persistence.Seed;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -69,13 +67,6 @@ if (!string.IsNullOrWhiteSpace(port))
 }
 
 var app = builder.Build();
-
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await DbInitializer.InitializeAsync(dbContext);
-    await AuthSchemaInitializer.InitializeAsync(dbContext);
-}
 
 if (builder.Configuration.GetValue<bool>("Swagger:Enabled"))
 {

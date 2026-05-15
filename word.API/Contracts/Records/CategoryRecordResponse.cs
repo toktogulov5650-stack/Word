@@ -7,5 +7,6 @@ public class CategoryRecordResponse
     public int CategoryId { get; set; }
     public string CategoryName { get; set; } = string.Empty;
     public int BestScore { get; set; }
+    public int BestTotalQuestionCount { get; set; }
 }
 

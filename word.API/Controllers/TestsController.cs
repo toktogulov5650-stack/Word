@@ -38,6 +38,7 @@ public class TestsController : ControllerBase
         var response = new StartTestResponse
         {
             TestSessionId = result.TestSessionId,
+            TotalQuestionCount = result.TotalQuestionCount,
             CurrentQuestion = new CurrentQuestionResponse
             {
                 WordId = result.CurrentQuestion.WordId,
@@ -68,6 +69,7 @@ public class TestsController : ControllerBase
         {
             IsCorrect = result.IsCorrect,
             CorrectAnswerCount = result.CorrectAnswerCount,
+            TotalQuestionCount = result.TotalQuestionCount,
             IsFinished = result.IsFinished
         };
 
@@ -94,7 +96,9 @@ public class TestsController : ControllerBase
         var response = new FinishTestResponse
         {
             CorrectAnswerCount = result.CorrectAnswerCount,
-            BestScore = result.BestScore
+            TotalQuestionCount = result.TotalQuestionCount,
+            BestScore = result.BestScore,
+            BestTotalQuestionCount = result.BestTotalQuestionCount
         };
 
         return Ok(response);

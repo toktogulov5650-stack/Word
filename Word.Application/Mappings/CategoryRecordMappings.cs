@@ -17,7 +17,8 @@ public static class CategoryRecordMappings
         {
             CategoryId = categoryRecord.CategoryId,
             CategoryName = translation?.Name ?? string.Empty,
-            BestScore = categoryRecord.BestScore
+            BestScore = categoryRecord.BestScore,
+            BestTotalQuestionCount = categoryRecord.BestTotalQuestionCount
         };
     }
 }

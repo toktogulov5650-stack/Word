@@ -36,7 +36,8 @@ public class RecordsController : ControllerBase
         {
             CategoryId = result.CategoryId,
             CategoryName = result.CategoryName,
-            BestScore = result.BestScore
+            BestScore = result.BestScore,
+            BestTotalQuestionCount = result.BestTotalQuestionCount
         };
 
         return Ok(response);

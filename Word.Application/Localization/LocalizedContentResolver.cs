@@ -29,7 +29,7 @@ public static class LocalizedContentResolver
                 return match;
         }
 
-        return translationList.FirstOrDefault();
+        return null;
     }
 
     public static IReadOnlyCollection<T> ResolveTranslations<T>(
@@ -50,7 +50,7 @@ public static class LocalizedContentResolver
                 return matches;
         }
 
-        return translationList;
+        return Array.Empty<T>();
     }
 
     private static IReadOnlyCollection<string> BuildLanguageFallback(string? languageCode)
@@ -61,8 +61,11 @@ public static class LocalizedContentResolver
         if (!fallbackOrder.Contains(DefaultLanguageCode, StringComparer.OrdinalIgnoreCase))
             fallbackOrder.Add(DefaultLanguageCode);
 
-        if (!fallbackOrder.Contains(SecondaryLanguageCode, StringComparer.OrdinalIgnoreCase))
+        if (string.Equals(normalizedLanguageCode, SecondaryLanguageCode, StringComparison.OrdinalIgnoreCase)
+            && !fallbackOrder.Contains(SecondaryLanguageCode, StringComparer.OrdinalIgnoreCase))
+        {
             fallbackOrder.Add(SecondaryLanguageCode);
+        }
 
         return fallbackOrder;
     }

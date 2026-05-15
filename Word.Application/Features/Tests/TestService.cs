@@ -84,6 +84,7 @@ public class TestService : ITestService
         return new StartTestResponseDto
         {
             TestSessionId = testSession.Id,
+            TotalQuestionCount = testSession.TotalQuestionCount,
             CurrentQuestion = BuildCurrentQuestion(shuffledWords[0], words, normalizedLanguageCode)
         };
     }
@@ -131,6 +132,7 @@ public class TestService : ITestService
             {
                 IsCorrect = isCorrect,
                 CorrectAnswerCount = testSession.CorrectAnswerCount,
+                TotalQuestionCount = testSession.TotalQuestionCount,
                 IsFinished = true,
                 CurrentQuestion = null
             };
@@ -149,6 +151,7 @@ public class TestService : ITestService
         {
             IsCorrect = isCorrect,
             CorrectAnswerCount = testSession.CorrectAnswerCount,
+            TotalQuestionCount = testSession.TotalQuestionCount,
             IsFinished = false,
             CurrentQuestion = BuildCurrentQuestion(nextWord, words, testSession.LanguageCode)
         };
@@ -176,19 +179,30 @@ public class TestService : ITestService
 
         if (record is null)
         {
-            record = new CategoryRecord(testSession.CategoryId, testSession.CorrectAnswerCount);
+            record = new CategoryRecord(
+                testSession.CategoryId,
+                testSession.CorrectAnswerCount,
+                testSession.TotalQuestionCount);
+
             await _categoryRecordRepository.AddAsync(record, cancellationToken);
         }
         else if (testSession.CorrectAnswerCount > record.BestScore)
         {
-            record.UpdateBestScore(testSession.CorrectAnswerCount);
+            record.UpdateBestScore(testSession.CorrectAnswerCount, testSession.TotalQuestionCount);
+            await _categoryRecordRepository.UpdateAsync(record, cancellationToken);
+        }
+        else if (record.BestTotalQuestionCount == 0 && testSession.CorrectAnswerCount == record.BestScore)
+        {
+            record.UpdateBestScore(record.BestScore, testSession.TotalQuestionCount);
             await _categoryRecordRepository.UpdateAsync(record, cancellationToken);
         }
 
         return new FinishTestResponseDto
         {
             CorrectAnswerCount = testSession.CorrectAnswerCount,
-            BestScore = record.BestScore
+            TotalQuestionCount = testSession.TotalQuestionCount,
+            BestScore = record.BestScore,
+            BestTotalQuestionCount = record.BestTotalQuestionCount
         };
     }
 

@@ -12,4 +12,6 @@ public class CategoryRecordDto
     public string CategoryName { get; set; } = string.Empty;
 
     public int BestScore { get; set; }
+
+    public int BestTotalQuestionCount { get; set; }
 }
